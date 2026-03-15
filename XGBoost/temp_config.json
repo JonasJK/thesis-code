@@ -1,0 +1,1 @@
+{"n_estimators": 701, "max_depth": 3, "learning_rate": 0.28384813432133726, "subsample": 0.9981097345815186, "colsample_bytree": 0.5218818081964749, "tree_method": "hist", "random_state": 42, "n_jobs": -1, "early_stopping_rounds": 19}
