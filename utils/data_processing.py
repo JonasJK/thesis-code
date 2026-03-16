@@ -15,6 +15,7 @@ from .memory_utils import print_memory_info
 
 log = logging.getLogger(__name__)
 
+
 def load_rgbi_image(file_path, chunk_size=None, extract_features_func=None, eps=None):
     """Load and process an RGBI image in chunks with adaptive sizing.
 
@@ -43,16 +44,14 @@ def load_rgbi_image(file_path, chunk_size=None, extract_features_func=None, eps=
     if chunk_size is None:
         import os
 
-        available_memory_gb = int(
-            os.getenv("SLURM_MEM_PER_CPU", 0)
-        ) / 1024 or psutil.virtual_memory().available / (1024**3)
+        available_memory_gb = int(os.getenv("SLURM_MEM_PER_CPU", 0)) / 1024 or psutil.virtual_memory().available / (
+            1024**3
+        )
 
         target_memory_mb = min(8192, max(1024, available_memory_gb * 1024))
         chunk_size = int(np.sqrt(target_memory_mb * 1024 * 1024 / 64))
         chunk_size = max(4096, min(32786, chunk_size))
-        log.info(
-            f"Adaptive chunk size: {chunk_size} (available memory: {available_memory_gb:.1f}GB)"
-        )
+        log.info(f"Adaptive chunk size: {chunk_size} (available memory: {available_memory_gb:.1f}GB)")
     else:
         log.info(f"Using fixed chunk size: {chunk_size}")
 
@@ -82,9 +81,7 @@ def load_rgbi_image(file_path, chunk_size=None, extract_features_func=None, eps=
                         if np.any(valid_mask):
                             rgb_valid = rgb[valid_mask].astype(np.float32, copy=False)
                             features = extract_features_func(rgb_valid)
-                            return features, nir[valid_mask].astype(
-                                np.float32, copy=False
-                            )
+                            return features, nir[valid_mask].astype(np.float32, copy=False)
                         return None
 
                     result = dask.delayed(process_chunk)(data)
@@ -96,6 +93,7 @@ def load_rgbi_image(file_path, chunk_size=None, extract_features_func=None, eps=
     except Exception as e:
         log.info(f"Error opening {file_path}: {e}")
         return
+
 
 def reservoir_sampling_update(
     new_features,
@@ -161,9 +159,7 @@ def reservoir_sampling_update(
         n_keep = np.sum(keep_mask)
 
         if n_keep > 0:
-            replace_indices = np.random.randint(
-                0, max_samples, size=n_keep, dtype=np.int32
-            )
+            replace_indices = np.random.randint(0, max_samples, size=n_keep, dtype=np.int32)
 
             training_rgb[replace_indices] = new_features[keep_mask]
             training_nir[replace_indices] = new_nir[keep_mask]

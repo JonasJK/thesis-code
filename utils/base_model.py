@@ -15,6 +15,7 @@ from .training import train_from_data_loader
 
 log = logging.getLogger(__name__)
 
+
 class BaseNirModel:
     """Base class for NIR prediction models."""
 
@@ -22,9 +23,7 @@ class BaseNirModel:
         self.max_samples = max_samples
         self.total_pixels_seen = 0
         self.EPS = np.finfo(np.float32).eps
-        self.training_rgb = np.empty(
-            (max_samples, 8), dtype=np.float32
-        )  # RG + 6 additional features
+        self.training_rgb = np.empty((max_samples, 8), dtype=np.float32)  # RG + 6 additional features
         self.training_nir = np.empty(max_samples, dtype=np.float32)
         self.sample_count = 0
         self.training_files = set()
@@ -48,16 +47,14 @@ class BaseNirModel:
 
     def _reservoir_sampling_update(self, new_features, new_nir):
         """Update reservoir sampling with new data."""
-        self.sample_count, self.total_pixels_seen, added, replaced = (
-            reservoir_sampling_update(
-                new_features,
-                new_nir,
-                self.training_rgb,
-                self.training_nir,
-                self.sample_count,
-                self.total_pixels_seen,
-                self.max_samples,
-            )
+        self.sample_count, self.total_pixels_seen, added, replaced = reservoir_sampling_update(
+            new_features,
+            new_nir,
+            self.training_rgb,
+            self.training_nir,
+            self.sample_count,
+            self.total_pixels_seen,
+            self.max_samples,
         )
 
     def load_rgbi_image(self, file_path, chunk_size=None):
@@ -69,13 +66,9 @@ class BaseNirModel:
         """Train using DataLoader for true 1-by-1 processing."""
         train_from_data_loader(self, data_loader, max_files)
 
-    def evaluate_files(
-        self, file_paths_or_loader, downscale_to=None, sample_limit=None, max_files=None
-    ):
+    def evaluate_files(self, file_paths_or_loader, downscale_to=None, sample_limit=None, max_files=None):
         """Evaluate model predictions against ground truth."""
-        return evaluate_files(
-            self, file_paths_or_loader, downscale_to, sample_limit, max_files
-        )
+        return evaluate_files(self, file_paths_or_loader, downscale_to, sample_limit, max_files)
 
     def train_from_directory(self, directory, file_list=None):
         """Train from a directory of files."""
@@ -84,43 +77,33 @@ class BaseNirModel:
 
         start = time.time()
         if file_list is None:
-            all_files = [
-                os.path.join(directory, f)
-                for f in os.listdir(directory)
-                if f.endswith(".tif")
-            ]
+            all_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(".tif")]
         else:
             all_files = file_list
 
         log.info(f"Starting training data collection from {len(all_files)} files")
         random.shuffle(all_files)
         for idx, file_path in enumerate(all_files):
-            log.info(f"Processing file {idx+1}/{len(all_files)}: {file_path}")
+            log.info(f"Processing file {idx + 1}/{len(all_files)}: {file_path}")
             for features, nir in self.load_rgbi_image(file_path):
                 self._reservoir_sampling_update(features, nir)
 
         duration = time.time() - start
         self.timing["processing"] = duration
-        log.info(
-            f"Finished sampling. Total samples stored: {self.sample_count} (processing time: {duration:.2f}s)"
-        )
+        log.info(f"Finished sampling. Total samples stored: {self.sample_count} (processing time: {duration:.2f}s)")
         self._print_memory_info("train_from_directory_end")
 
     def print_summary(self):
         """Print timing summary and feature importances if available."""
         log.info("=== Summary ===")
-        log.info(
-            f"Processing time (sampling): {self.timing.get('processing', 0.0):.2f}s"
-        )
+        log.info(f"Processing time (sampling): {self.timing.get('processing', 0.0):.2f}s")
         log.info(f"Fit time: {self.timing.get('fit', 0.0):.2f}s")
         log.info(f"Predict time (cumulative): {self.timing.get('predict', 0.0):.2f}s")
         log.info(f"Evaluate time: {self.timing.get('evaluate', 0.0):.2f}s")
         if self.feature_importances_ is not None:
             feature_names = get_feature_names()
             log.info("Feature importances:")
-            for name, importance in zip(
-                feature_names, self.feature_importances_, strict=False
-            ):
+            for name, importance in zip(feature_names, self.feature_importances_, strict=False):
                 log.info(f"  {name}: {importance:.4f}")
         else:
             log.info("Feature importances: not available (model not fitted)")

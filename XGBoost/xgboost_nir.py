@@ -29,8 +29,8 @@ log = logging.getLogger(__name__)
 
 # Core XGBoost Logic.
 
-class XGBoostNir(BaseNirModel):
 
+class XGBoostNir(BaseNirModel):
     def __init__(self, config_path="config.json", validation_split=0.3):
         super().__init__()
         self.validation_split = validation_split
@@ -67,9 +67,7 @@ class XGBoostNir(BaseNirModel):
         X = self.training_rgb[: self.sample_count]
         y = self.training_nir[: self.sample_count]
 
-        X_train, X_val, y_train, y_val = train_test_split(
-            X, y, test_size=self.validation_split, random_state=42
-        )
+        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=self.validation_split, random_state=42)
         log.info(f"Training set: {len(X_train)}, Validation set: {len(X_val)}")
 
         # Convert to DMatrix for low-level API
@@ -109,9 +107,7 @@ class XGBoostNir(BaseNirModel):
             else:
                 no_improve_rounds += 1
             if no_improve_rounds >= early_stopping_rounds:
-                log.info(
-                    f"Early stopping triggered at iteration {best_iteration}, score={best_score:.4f}"
-                )
+                log.info(f"Early stopping triggered at iteration {best_iteration}, score={best_score:.4f}")
                 break
             if i % 10 == 0:
                 log.info(f"Iteration {i}: validation score={combined_score:.4f}")
@@ -212,14 +208,13 @@ class XGBoostNir(BaseNirModel):
 
         return instance
 
+
 @profile_execution
 def main():
     import argparse
     import sys
 
-    parser = argparse.ArgumentParser(
-        description="Train and evaluate XGBoost NIR prediction model"
-    )
+    parser = argparse.ArgumentParser(description="Train and evaluate XGBoost NIR prediction model")
     parser.add_argument(
         "-n",
         type=int,
@@ -232,9 +227,7 @@ def main():
         help="Path to RGB image file for prediction",
         default=None,
     )
-    parser.add_argument(
-        "--output", type=str, help="Path to save predicted NIR image", default=None
-    )
+    parser.add_argument("--output", type=str, help="Path to save predicted NIR image", default=None)
     parser.add_argument(
         "--data-source",
         type=str,
@@ -264,9 +257,7 @@ def main():
         help="Path to saved model file to load instead of training",
         default=None,
     )
-    parser.add_argument(
-        "--save-model", type=str, help="Path to save the trained model", default=None
-    )
+    parser.add_argument("--save-model", type=str, help="Path to save the trained model", default=None)
 
     args = parser.parse_args()
 
@@ -307,19 +298,13 @@ def main():
 
             else:
                 # Use single data source with automatic train/test split based on training files tracking
-                log.info(
-                    f"Using single data source with automatic train/test split: {args.data_source}"
-                )
+                log.info(f"Using single data source with automatic train/test split: {args.data_source}")
 
                 with DataLoader(args.data_source) as data_loader:
                     log.info(f"DataLoader initialized: {data_loader}")
 
                     total_files = len(data_loader)
-                    max_train_files = (
-                        int(total_files * args.train_test_split)
-                        if args.n is None
-                        else args.n
-                    )
+                    max_train_files = int(total_files * args.train_test_split) if args.n is None else args.n
 
                     log.info(
                         f"Total files: {total_files}, Using {max_train_files} for training ({args.train_test_split:.1%} split)"
@@ -363,13 +348,9 @@ def main():
         else:
             log.info(f"Evaluating on data source: {args.data_source}")
             with DataLoader(args.data_source) as eval_data_loader:
-                log.info(
-                    f"Created separate DataLoader for evaluation: {eval_data_loader}"
-                )
+                log.info(f"Created separate DataLoader for evaluation: {eval_data_loader}")
                 if hasattr(model, "training_files") and model.training_files:
-                    log.info(
-                        f"Evaluation will automatically skip {len(model.training_files)} files used in training"
-                    )
+                    log.info(f"Evaluation will automatically skip {len(model.training_files)} files used in training")
                 eval_results = model.evaluate_files(
                     eval_data_loader,
                     downscale_to=None,
@@ -395,9 +376,8 @@ def main():
         else:
             log.error("NIR prediction or saving failed")
     elif args.predict or args.output:
-        log.error(
-            "Both --predict and --output arguments must be provided to generate NIR prediction"
-        )
+        log.error("Both --predict and --output arguments must be provided to generate NIR prediction")
+
 
 if __name__ == "__main__":
     main()

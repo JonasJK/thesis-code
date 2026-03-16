@@ -15,6 +15,7 @@ from skimage.transform import resize
 
 log = logging.getLogger(__name__)
 
+
 def clear_gpu_memory():
     """Clear GPU memory cache to prevent OOM errors during long evaluation runs."""
     torch.cuda.empty_cache()
@@ -22,9 +23,8 @@ def clear_gpu_memory():
     cp.get_default_memory_pool().free_all_blocks()
     cp.get_default_pinned_memory_pool().free_all_blocks()
 
-def evaluate_files(
-    model, file_paths_or_loader, downscale_to=None, sample_limit=None, max_files=None
-):
+
+def evaluate_files(model, file_paths_or_loader, downscale_to=None, sample_limit=None, max_files=None):
     """Evaluate model predictions against ground truth.
 
     Can accept either:
@@ -84,27 +84,19 @@ def evaluate_files(
         processed_count += 1
 
         # Check if this file was used in training
-        normalized_path = (
-            str(Path(file_path).resolve()) if not is_temp else str(file_path)
-        )
+        normalized_path = str(Path(file_path).resolve()) if not is_temp else str(file_path)
         if hasattr(model, "training_files") and normalized_path in model.training_files:
-            log.info(
-                f"Skipping file {processed_count}/{total_files}: {file_path} (used in training)"
-            )
+            log.info(f"Skipping file {processed_count}/{total_files}: {file_path} (used in training)")
             continue
 
         evaluated_count += 1
 
         try:
-            log.info(
-                f"Evaluating file {evaluated_count}/{total_files}: {file_path} (temp: {is_temp})"
-            )
+            log.info(f"Evaluating file {evaluated_count}/{total_files}: {file_path} (temp: {is_temp})")
 
             with rasterio.open(file_path) as src:
                 if src.count < 4:
-                    log.info(
-                        f"Skipping {file_path}: needs 4 bands (RGBI), found {src.count}"
-                    )
+                    log.info(f"Skipping {file_path}: needs 4 bands (RGBI), found {src.count}")
                     continue
 
                 data = src.read()
@@ -125,9 +117,7 @@ def evaluate_files(
                 )
 
                 if not np.any(valid_mask):
-                    log.info(
-                        f"Skipping {file_path}: no valid pixels found for evaluation"
-                    )
+                    log.info(f"Skipping {file_path}: no valid pixels found for evaluation")
                     continue
 
                 actual_vals = flat_actual[valid_mask]
@@ -135,9 +125,7 @@ def evaluate_files(
 
                 if sample_limit is not None and len(actual_vals) > sample_limit:
                     np.random.seed(42)
-                    idx = np.random.choice(
-                        len(actual_vals), size=sample_limit, replace=False
-                    )
+                    idx = np.random.choice(len(actual_vals), size=sample_limit, replace=False)
                     actual_vals = actual_vals[idx]
                     pred_vals = pred_vals[idx]
 
@@ -154,30 +142,20 @@ def evaluate_files(
 
                 try:
                     if downscale_to is not None:
-                        a_resized = resize(
-                            nir_actual, (downscale_to, downscale_to), anti_aliasing=True
-                        )
-                        p_resized = resize(
-                            pred_nir, (downscale_to, downscale_to), anti_aliasing=True
-                        )
+                        a_resized = resize(nir_actual, (downscale_to, downscale_to), anti_aliasing=True)
+                        p_resized = resize(pred_nir, (downscale_to, downscale_to), anti_aliasing=True)
                     else:
                         a_resized = nir_actual
                         p_resized = pred_nir
 
                     data_range = float(p_resized.max() - p_resized.min())
-                    file_ssim = (
-                        0.0
-                        if data_range == 0
-                        else ssim(a_resized, p_resized, data_range=data_range)
-                    )
+                    file_ssim = 0.0 if data_range == 0 else ssim(a_resized, p_resized, data_range=data_range)
                 except Exception as e:
                     log.info(f"SSIM calculation failed for {file_path}: {e}")
                     file_ssim = 0.0
 
                 per_file_ssim.append(file_ssim)
-                log.info(
-                    f"Metrics for {Path(file_path).name}: SSIM={file_ssim:.4f}, pixels={n}"
-                )
+                log.info(f"Metrics for {Path(file_path).name}: SSIM={file_ssim:.4f}, pixels={n}")
 
                 del rgb, nir_actual, pred_nir, data
                 if downscale_to is not None:
@@ -220,11 +198,7 @@ def evaluate_files(
     duration = time.time() - start
     model.timing["evaluate"] = duration
 
-    log.info(
-        f"Evaluation summary across {results['n_files']} files and {results['n_pixels']:,} pixels:"
-    )
+    log.info(f"Evaluation summary across {results['n_files']} files and {results['n_pixels']:,} pixels:")
     log.info(f"RMSE={rmse:.4f}, R2={r2:.4f}, MAE={mae:.4f}, SSIM(avg)={avg_ssim:.4f}")
-    log.info(
-        f"Evaluation total time: {duration:.2f}s (predict cumulative: {model.timing['predict']:.2f}s)"
-    )
+    log.info(f"Evaluation total time: {duration:.2f}s (predict cumulative: {model.timing['predict']:.2f}s)")
     return results

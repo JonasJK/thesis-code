@@ -6,6 +6,7 @@ import numpy as np
 import rasterio
 from tqdm import tqdm
 
+
 def benchmark_file_formats(file_list_path, n_files=50):
     """
     Simple benchmark: test 50 random files and compare TIF vs JP2 loading times.
@@ -44,9 +45,7 @@ def benchmark_file_formats(file_list_path, n_files=50):
                     src.read()
                 else:
                     # Large image - sample (same as your code)
-                    sample_indices = np.random.choice(
-                        total_pixels, n_samples, replace=False
-                    )
+                    sample_indices = np.random.choice(total_pixels, n_samples, replace=False)
                     row_indices = sample_indices // width
                     col_indices = sample_indices % width
 
@@ -73,22 +72,22 @@ def benchmark_file_formats(file_list_path, n_files=50):
             print(f"Error with {Path(filepath).name}: {e}")
 
     # Print results
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("BENCHMARK RESULTS")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
 
     if tif_times:
         print(f"TIF FILES ({len(tif_times)} tested):")
         print(f"  Avg time: {np.mean(tif_times):.2f}s")
         print(f"  Avg size: {np.mean(tif_sizes):.1f}MB")
-        print(f"  Time/MB: {np.mean(tif_times)/np.mean(tif_sizes):.3f}s/MB")
+        print(f"  Time/MB: {np.mean(tif_times) / np.mean(tif_sizes):.3f}s/MB")
         print(f"  Range: {np.min(tif_times):.1f}s - {np.max(tif_times):.1f}s")
 
     if jp2_times:
         print(f"\nJP2 FILES ({len(jp2_times)} tested):")
         print(f"  Avg time: {np.mean(jp2_times):.2f}s")
         print(f"  Avg size: {np.mean(jp2_sizes):.1f}MB")
-        print(f"  Time/MB: {np.mean(jp2_times)/np.mean(jp2_sizes):.3f}s/MB")
+        print(f"  Time/MB: {np.mean(jp2_times) / np.mean(jp2_sizes):.3f}s/MB")
         print(f"  Range: {np.min(jp2_times):.1f}s - {np.max(jp2_times):.1f}s")
 
     # Compare if we have both formats
@@ -98,9 +97,7 @@ def benchmark_file_formats(file_list_path, n_files=50):
         slowdown = jp2_avg / tif_avg
 
         print("\nCOMPARISON:")
-        print(
-            f"JP2 is {slowdown:.1f}x {'SLOWER' if slowdown > 1 else 'FASTER'} than TIF"
-        )
+        print(f"JP2 is {slowdown:.1f}x {'SLOWER' if slowdown > 1 else 'FASTER'} than TIF")
 
         if slowdown > 3:
             print("DIAGNOSIS: JP2 files are likely causing your 10s->60s slowdown")
@@ -111,6 +108,7 @@ def benchmark_file_formats(file_list_path, n_files=50):
         "tif_sizes": tif_sizes,
         "jp2_sizes": jp2_sizes,
     }
+
 
 if __name__ == "__main__":
     results = benchmark_file_formats("/home/klugej/thesis/file_list.txt", n_files=50)

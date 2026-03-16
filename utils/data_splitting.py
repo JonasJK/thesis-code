@@ -9,6 +9,7 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
+
 def split_file_list(
     input_file: str | Path,
     output_train: str | Path,
@@ -81,8 +82,9 @@ def split_file_list(
     log.info("Split complete:")
     log.info(f"  Training set: {len(train_files)} files -> {output_train}")
     log.info(f"  Test set: {len(test_files)} files -> {output_test}")
-    log.info(f"  Split ratio: {train_ratio:.2%} training, {1-train_ratio:.2%} test")
+    log.info(f"  Split ratio: {train_ratio:.2%} training, {1 - train_ratio:.2%} test")
     return len(train_files), len(test_files)
+
 
 def create_stratified_split_by_directory(
     input_file: str | Path,
@@ -128,9 +130,7 @@ def create_stratified_split_by_directory(
 
     for dir_name, files in directory_groups.items():
         random.shuffle(files)
-        split_point = max(
-            1, int(len(files) * train_ratio)
-        )  # Ensure at least 1 file in training
+        split_point = max(1, int(len(files) * train_ratio))  # Ensure at least 1 file in training
         train_files.extend(files[:split_point])
         test_files.extend(files[split_point:])
 
@@ -154,17 +154,14 @@ def create_stratified_split_by_directory(
 
     return len(train_files), len(test_files)
 
+
 def main():
     """Command line interface for data splitting."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Split file list into training and test sets"
-    )
+    parser = argparse.ArgumentParser(description="Split file list into training and test sets")
     parser.add_argument("input_file", help="Input file list (.txt)")
-    parser.add_argument(
-        "--output-train", required=True, help="Output training file list"
-    )
+    parser.add_argument("--output-train", required=True, help="Output training file list")
     parser.add_argument("--output-test", required=True, help="Output test file list")
     parser.add_argument(
         "--train-ratio",
@@ -172,9 +169,7 @@ def main():
         default=0.8,
         help="Training set ratio (default: 0.8)",
     )
-    parser.add_argument(
-        "--stratified", action="store_true", help="Use stratified split by directory"
-    )
+    parser.add_argument("--stratified", action="store_true", help="Use stratified split by directory")
     parser.add_argument(
         "--seed",
         type=int,
@@ -184,9 +179,7 @@ def main():
 
     args = parser.parse_args()
 
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     try:
         if args.stratified:
@@ -207,14 +200,15 @@ def main():
             )
 
         print(f"Split {n_train + n_test} files:")
-        print(f"  Training: {n_train} files ({n_train/(n_train+n_test):.1%})")
-        print(f"  Test: {n_test} files ({n_test/(n_train+n_test):.1%})")
+        print(f"  Training: {n_train} files ({n_train / (n_train + n_test):.1%})")
+        print(f"  Test: {n_test} files ({n_test / (n_train + n_test):.1%})")
 
     except Exception as e:
         log.error(f"Error during splitting: {e}")
         return 1
 
     return 0
+
 
 if __name__ == "__main__":
     exit(main())

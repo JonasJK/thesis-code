@@ -25,16 +25,14 @@ log = logging.getLogger(__name__)
 
 # Core Random Forest Logic.
 
-class RandomForestNir(BaseNirModel):
 
+class RandomForestNir(BaseNirModel):
     def __init__(self, max_samples=600_000_000, max_depth=22, n_estimators=298):
         super().__init__(max_samples)
         self.max_depth = max_depth
         self.n_estimators = n_estimators
 
-        self.model = cuRF(
-            n_estimators=n_estimators, max_depth=max_depth, max_features=1
-        )
+        self.model = cuRF(n_estimators=n_estimators, max_depth=max_depth, max_features=1)
         log.info(
             f"Initialized cuML RandomForestNir(max_samples={max_samples}, n_estimators={n_estimators}, max_depth={max_depth})"
         )
@@ -136,9 +134,7 @@ class RandomForestNir(BaseNirModel):
 
         log.info(f"Model loaded from {filepath}")
         log.info(f"  Trained on {instance.sample_count:,} samples")
-        log.info(
-            f"  Hyperparameters: n_estimators={instance.n_estimators}, max_depth={instance.max_depth}"
-        )
+        log.info(f"  Hyperparameters: n_estimators={instance.n_estimators}, max_depth={instance.max_depth}")
         log.info(f"  Saved at: {model_data['timestamp']}")
 
         if instance.feature_importances_ is not None:
@@ -153,21 +149,18 @@ class RandomForestNir(BaseNirModel):
                 "VEG",
             ]
             log.info("  Feature importances:")
-            for name, importance in zip(
-                feature_names, instance.feature_importances_, strict=False
-            ):
+            for name, importance in zip(feature_names, instance.feature_importances_, strict=False):
                 log.info(f"    {name}: {importance:.4f}")
 
         return instance
+
 
 @profile_execution
 def main():
     import argparse
     import sys
 
-    parser = argparse.ArgumentParser(
-        description="Train and evaluate RandomForest NIR prediction model"
-    )
+    parser = argparse.ArgumentParser(description="Train and evaluate RandomForest NIR prediction model")
     parser.add_argument(
         "-n",
         type=int,
@@ -180,9 +173,7 @@ def main():
         help="Path to RGB image file for prediction",
         default=None,
     )
-    parser.add_argument(
-        "--output", type=str, help="Path to save predicted NIR image", default=None
-    )
+    parser.add_argument("--output", type=str, help="Path to save predicted NIR image", default=None)
     parser.add_argument(
         "--data-source",
         type=str,
@@ -200,9 +191,7 @@ def main():
         help="Path to saved model file to load instead of training",
         default=None,
     )
-    parser.add_argument(
-        "--save-model", type=str, help="Path to save the trained model", default=None
-    )
+    parser.add_argument("--save-model", type=str, help="Path to save the trained model", default=None)
 
     args = parser.parse_args()
 
@@ -271,9 +260,8 @@ def main():
         else:
             log.error("NIR prediction or saving failed")
     elif args.predict or args.output:
-        log.error(
-            "Both --predict and --output arguments must be provided to generate NIR prediction"
-        )
+        log.error("Both --predict and --output arguments must be provided to generate NIR prediction")
+
 
 if __name__ == "__main__":
     main()

@@ -14,6 +14,7 @@ from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 
 log = logging.getLogger(__name__)
 
+
 def calculate_ssim_for_files(original_file, predicted_file, downscale_to=None):
     """Calculate SSIM between original and predicted NIR images.
 
@@ -43,14 +44,13 @@ def calculate_ssim_for_files(original_file, predicted_file, downscale_to=None):
 
     data_range = float(pred_nir.max() - pred_nir.min())
     if data_range == 0:
-        log.info(
-            "Predicted NIR image has zero data range; SSIM undefined. Returning 0."
-        )
+        log.info("Predicted NIR image has zero data range; SSIM undefined. Returning 0.")
         return 0.0
 
     result = ssim(nir, pred_nir, data_range=data_range)
     log.info(f"SSIM result: {result:.4f}")
     return result
+
 
 def predict_and_save_nir(model, input_rgb_file, output_nir_file):
     """
@@ -77,9 +77,7 @@ def predict_and_save_nir(model, input_rgb_file, output_nir_file):
     try:
         with rasterio.open(input_rgb_file) as src:
             if src.count < 3:
-                log.info(
-                    f"Error: Input file needs at least 3 bands (RGB), found {src.count}"
-                )
+                log.info(f"Error: Input file needs at least 3 bands (RGB), found {src.count}")
                 return False
 
             rgb = src.read([1, 2, 3])
@@ -113,6 +111,7 @@ def predict_and_save_nir(model, input_rgb_file, output_nir_file):
         log.info(f"Error predicting/saving NIR: {e}")
         log.info(traceback.format_exc())
         return False
+
 
 def xgboost_eval(y_true, y_pred):
     """

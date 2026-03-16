@@ -15,8 +15,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.svm import SVR
 
+
 def rmse(y_true, y_pred):
     return np.sqrt(mean_squared_error(y_true, y_pred))
+
 
 def make_json_safe(obj):
     if isinstance(obj, (np.integer,)):
@@ -29,6 +31,7 @@ def make_json_safe(obj):
         return {k: make_json_safe(v) for k, v in obj.items()}
     else:
         return obj
+
 
 def partial_corr(df, x, y, covariates):
     from sklearn.linear_model import LinearRegression
@@ -45,6 +48,7 @@ def partial_corr(df, x, y, covariates):
         ry = yi - lr.predict(cov)
     r, p = stats.pearsonr(rx.ravel(), ry.ravel())
     return r, p
+
 
 def analyze(input_csv, output_dir, cv_folds=10, random_state=12345678, shap_sample=200):
     os.makedirs(output_dir, exist_ok=True)
@@ -76,10 +80,7 @@ def analyze(input_csv, output_dir, cv_folds=10, random_state=12345678, shap_samp
         }
         for i, f in enumerate(X.columns)
     }
-    partial = {
-        f: partial_corr(df, f, "rmse", [c for c in X.columns if c != f])[0]
-        for f in X.columns
-    }
+    partial = {f: partial_corr(df, f, "rmse", [c for c in X.columns if c != f])[0] for f in X.columns}
 
     models = {
         "Linear": Pipeline([("s", StandardScaler()), ("m", LinearRegression())]),
@@ -90,24 +91,16 @@ def analyze(input_csv, output_dir, cv_folds=10, random_state=12345678, shap_samp
                 ("m", LinearRegression()),
             ]
         ),
-        "RandomForest": RandomForestRegressor(
-            n_estimators=500, random_state=random_state
-        ),
-        "GradientBoosting": GradientBoostingRegressor(
-            n_estimators=500, random_state=random_state
-        ),
-        "SVR(RBF)": Pipeline(
-            [("s", StandardScaler()), ("m", SVR(kernel="rbf", C=1.0))]
-        ),
+        "RandomForest": RandomForestRegressor(n_estimators=500, random_state=random_state),
+        "GradientBoosting": GradientBoostingRegressor(n_estimators=500, random_state=random_state),
+        "SVR(RBF)": Pipeline([("s", StandardScaler()), ("m", SVR(kernel="rbf", C=1.0))]),
     }
 
     cv = KFold(n_splits=min(cv_folds, len(df)), shuffle=True, random_state=random_state)
     perf = []
     for name, model in models.items():
         scores_r2 = cross_val_score(model, X, y, cv=cv, scoring="r2")
-        scores_rmse = np.sqrt(
-            -cross_val_score(model, X, y, cv=cv, scoring="neg_mean_squared_error")
-        )
+        scores_rmse = np.sqrt(-cross_val_score(model, X, y, cv=cv, scoring="neg_mean_squared_error"))
         perf.append(
             {
                 "model": name,
@@ -134,9 +127,7 @@ def analyze(input_csv, output_dir, cv_folds=10, random_state=12345678, shap_samp
             explainer = shap.TreeExplainer(best_model)
             shap_values = explainer.shap_values(X)
         else:
-            sample_idx = np.random.choice(
-                len(X), min(shap_sample, len(X)), replace=False
-            )
+            sample_idx = np.random.choice(len(X), min(shap_sample, len(X)), replace=False)
             explainer = shap.KernelExplainer(best_model.predict, X.iloc[sample_idx, :])
             shap_values = explainer.shap_values(X.iloc[sample_idx, :], nsamples=100)
         shap_abs = np.mean(np.abs(shap_values), axis=0)
@@ -146,9 +137,7 @@ def analyze(input_csv, output_dir, cv_folds=10, random_state=12345678, shap_samp
 
     y_pred = best_model.predict(X)
     best_idx = np.argmin(y_pred)
-    best_params = df.iloc[best_idx][
-        ["n_estimators", "max_depth", "max_features"]
-    ].to_dict()
+    best_params = df.iloc[best_idx][["n_estimators", "max_depth", "max_features"]].to_dict()
     best_pred_rmse = y_pred[best_idx]
     best_true_rmse = y.iloc[best_idx]
 
@@ -180,15 +169,10 @@ def analyze(input_csv, output_dir, cv_folds=10, random_state=12345678, shap_samp
             "Most important feature (SHAP):",
             max(shap_importance, key=shap_importance.get),
         )
-    print(
-        f"\nPredicted best parameter set (lowest predicted RMSE={best_pred_rmse:.3f}): {best_params}"
-    )
+    print(f"\nPredicted best parameter set (lowest predicted RMSE={best_pred_rmse:.3f}): {best_params}")
     print(f"True RMSE at that point: {best_true_rmse:.3f}")
-    print(
-        f"\nSummary saved to: {os.path.abspath(os.path.join(output_dir, 'summary.json'))}"
-    )
+    print(f"\nSummary saved to: {os.path.abspath(os.path.join(output_dir, 'summary.json'))}")
+
 
 if __name__ == "__main__":
-    analyze(
-        "optuna_trials.csv", "eval", cv_folds=10, random_state=12345678, shap_sample=200
-    )
+    analyze("optuna_trials.csv", "eval", cv_folds=10, random_state=12345678, shap_sample=200)

@@ -17,10 +17,9 @@ import logging
 from DataLoader import DataLoader
 
 # Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 log = logging.getLogger(__name__)
+
 
 def create_test_files():
     """Create test files for testing DataLoader."""
@@ -33,9 +32,7 @@ def create_test_files():
     tiff_files = []
     for i in range(3):
         tiff_file = test_dir / f"test_image_{i}.tif"
-        tiff_file.write_bytes(
-            b"dummy tiff content"
-        )  # Not a real TIFF, just for testing
+        tiff_file.write_bytes(b"dummy tiff content")  # Not a real TIFF, just for testing
         tiff_files.append(tiff_file)
 
     file_list = test_dir / "file_list.txt"
@@ -56,6 +53,7 @@ def create_test_files():
 
     return test_dir, file_list, zip_dir, tiff_files, zip_files
 
+
 def test_file_list_loader():
     """Test DataLoader with file list."""
     log.info("Testing DataLoader with file list...")
@@ -74,15 +72,14 @@ def test_file_list_loader():
                 assert not is_temp, "Files from file list should not be temporary"
                 files_seen.append(file_path)
 
-            assert (
-                len(files_seen) == 3
-            ), f"Expected to see 3 files, saw {len(files_seen)}"
+            assert len(files_seen) == 3, f"Expected to see 3 files, saw {len(files_seen)}"
             log.info("File list test passed!")
 
     finally:
         import shutil
 
         shutil.rmtree(test_dir)
+
 
 def test_zip_directory_loader():
     """Test DataLoader with ZIP directory."""
@@ -103,15 +100,14 @@ def test_zip_directory_loader():
                 assert file_path.exists(), f"Extracted file should exist: {file_path}"
                 files_seen.append(file_path)
 
-            assert (
-                len(files_seen) == 3
-            ), f"Expected to see 3 files, saw {len(files_seen)}"
+            assert len(files_seen) == 3, f"Expected to see 3 files, saw {len(files_seen)}"
             log.info("ZIP directory test passed!")
 
     finally:
         import shutil
 
         shutil.rmtree(test_dir)
+
 
 def test_error_handling():
     """Test DataLoader error handling."""
@@ -137,6 +133,7 @@ def test_error_handling():
 
         shutil.rmtree(test_dir)
 
+
 def main():
     """Run all tests."""
     log.info("Starting DataLoader tests...")
@@ -154,6 +151,7 @@ def main():
         return 1
 
     return 0
+
 
 if __name__ == "__main__":
     exit_code = main()

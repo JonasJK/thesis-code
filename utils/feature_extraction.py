@@ -9,6 +9,7 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
+
 def extract_features(rgb, eps=None):
     """Extract enhanced features from RGB data for improved NIR prediction.
     Optimized with vectorized operations for better performance.
@@ -46,6 +47,7 @@ def extract_features(rgb, eps=None):
 
     return cp.asnumpy(features_gpu)
 
+
 def get_feature_names():
     """Get the names of all extracted features.
 
@@ -55,6 +57,7 @@ def get_feature_names():
         List of feature names in the same order as extract_features output
     """
     return ["R", "G", "ExG", "ExR", "NGRDI", "RGBVI", "TGI", "Brightness"]
+
 
 def analyze_feature_statistics(features, feature_names=None):
     """Analyze statistical properties of extracted features.

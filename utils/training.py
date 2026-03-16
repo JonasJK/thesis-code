@@ -11,6 +11,7 @@ from .memory_utils import print_memory_info
 
 log = logging.getLogger(__name__)
 
+
 def train_from_data_loader(model_instance, data_loader, max_files=None):
     """
     Train using DataLoader for true 1-by-1 processing.
@@ -40,14 +41,10 @@ def train_from_data_loader(model_instance, data_loader, max_files=None):
             break
 
         processed_count += 1
-        normalized_path = (
-            str(Path(file_path).resolve()) if not is_temp else str(file_path)
-        )
+        normalized_path = str(Path(file_path).resolve()) if not is_temp else str(file_path)
         model_instance.training_files.add(normalized_path)
 
-        log.info(
-            f"Processing file {processed_count}/{files_to_process}: {file_path} (temp: {is_temp})"
-        )
+        log.info(f"Processing file {processed_count}/{files_to_process}: {file_path} (temp: {is_temp})")
 
         try:
             # Use the model's method if it has one, otherwise use the shared function
@@ -55,12 +52,8 @@ def train_from_data_loader(model_instance, data_loader, max_files=None):
                 image_loader = model_instance.load_rgbi_image
             else:
                 # Create extract_features function that uses model's EPS
-                extract_features_func = lambda rgb: model_instance._extract_features(
-                    rgb
-                )
-                image_loader = lambda fp: load_rgbi_image(
-                    fp, extract_features_func=extract_features_func
-                )
+                extract_features_func = lambda rgb: model_instance._extract_features(rgb)
+                image_loader = lambda fp: load_rgbi_image(fp, extract_features_func=extract_features_func)
 
             for features, nir in image_loader(file_path):
                 # Update model's reservoir sampling
@@ -99,8 +92,6 @@ def train_from_data_loader(model_instance, data_loader, max_files=None):
     duration = time.time() - start
     model_instance.timing["processing"] = duration
     log.info(f"Finished sampling from DataLoader. Files processed: {processed_count}")
-    log.info(
-        f"Total samples stored: {model_instance.sample_count} (processing time: {duration:.2f}s)"
-    )
+    log.info(f"Total samples stored: {model_instance.sample_count} (processing time: {duration:.2f}s)")
     log.info(f"Training files tracked: {len(model_instance.training_files)}")
     print_memory_info("train_from_data_loader_end")

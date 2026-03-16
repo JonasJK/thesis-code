@@ -32,8 +32,8 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-class ModelPerformanceTracker:
 
+class ModelPerformanceTracker:
     def __init__(self, model_name="XGBoostNIR"):
         self.model_name = model_name
         self.experiments = []
@@ -50,11 +50,7 @@ class ModelPerformanceTracker:
                 "prediction_time": model.timing.get("predict", 0),
                 "total_time": sum(model.timing.values()),
             },
-            "feature_importance": (
-                model.feature_importances_
-                if model.feature_importances_ is not None
-                else None
-            ),
+            "feature_importance": (model.feature_importances_ if model.feature_importances_ is not None else None),
         }
         self.experiments.append(experiment)
         return experiment
@@ -63,9 +59,8 @@ class ModelPerformanceTracker:
         with open(filepath, "w") as f:
             json.dump(self.experiments, f, indent=2)
 
-def evaluate_xgboost(
-    data_source, results_dir, n_files=None, is_zip_dir=False, config_path="config.json"
-):
+
+def evaluate_xgboost(data_source, results_dir, n_files=None, is_zip_dir=False, config_path="config.json"):
     """
     Evaluate an XGBoost NIR prediction model.
 
@@ -101,9 +96,7 @@ def evaluate_xgboost(
             log.info(f"Model trained on {model.sample_count} samples")
 
             log.info("Evaluating model...")
-            eval_files_limit = min(
-                n_files or 10, 10
-            )  # Limit evaluation to max 10 files
+            eval_files_limit = min(n_files or 10, 10)  # Limit evaluation to max 10 files
             eval_results = model.evaluate_files(
                 data_loader,
                 downscale_to=None,
@@ -128,17 +121,13 @@ def evaluate_xgboost(
                     "data_source": str(data_source),
                     "n_files_available": len(data_loader),
                     "n_files_used_training": (
-                        len(model.training_files)
-                        if hasattr(model, "training_files")
-                        else n_files
+                        len(model.training_files) if hasattr(model, "training_files") else n_files
                     ),
                     "n_samples": model.sample_count,
                     "is_zip_dir": is_zip_dir,
                 }
 
-                experiment = tracker.track_experiment(
-                    model, eval_results, hyperparams, dataset_info
-                )
+                experiment = tracker.track_experiment(model, eval_results, hyperparams, dataset_info)
 
                 results_file = os.path.join(results_dir, "evaluation_results.json")
                 tracker.save_results(results_file)
@@ -171,6 +160,7 @@ def evaluate_xgboost(
         gc.collect()
         log.info("Memory cleanup completed")
 
+
 def append_trial_to_csv(csv_path, rmse, hyperparams):
     fieldnames = ["rmse"] + list(hyperparams.keys())
     file_exists = os.path.isfile(csv_path)
@@ -182,14 +172,11 @@ def append_trial_to_csv(csv_path, rmse, hyperparams):
         row.update(hyperparams)
         writer.writerow(row)
 
-def perform_hyperparameter_optimization(
-    data_source, results_dir, n_trials=50, n_files=None
-):
+
+def perform_hyperparameter_optimization(data_source, results_dir, n_trials=50, n_files=None):
     os.makedirs(results_dir, exist_ok=True)
     # Write CSV in the same directory as this Python file
-    csv_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "optuna_trials.csv"
-    )
+    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "optuna_trials.csv")
 
     def objective(trial):
         # Define the hyperparameter search space for XGBoost
@@ -296,31 +283,24 @@ def perform_hyperparameter_optimization(
     with open(config_path, "w") as f:
         json.dump(best_params, f, indent=2)
 
-    log.info(
-        f"Hyperparameter optimization complete. Best parameters: {best_params}, Best value: {best_value:.4f}"
-    )
+    log.info(f"Hyperparameter optimization complete. Best parameters: {best_params}, Best value: {best_value:.4f}")
     log.info("Updated config.json with best parameters")
 
     return results
 
+
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Evaluate XGBoost model or perform hyperparameter optimization"
-    )
+    parser = argparse.ArgumentParser(description="Evaluate XGBoost model or perform hyperparameter optimization")
     parser.add_argument(
         "--data-source",
         type=str,
         required=True,
         help="Path to file list (.txt) or directory containing ZIP files",
     )
-    parser.add_argument(
-        "--results-dir", type=str, required=True, help="Directory to save results"
-    )
-    parser.add_argument(
-        "-n", type=int, default=None, help="Number of files to use for training"
-    )
+    parser.add_argument("--results-dir", type=str, required=True, help="Directory to save results")
+    parser.add_argument("-n", type=int, default=None, help="Number of files to use for training")
     parser.add_argument(
         "--zip-dir",
         action="store_true",
@@ -347,10 +327,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.optimize:
-        perform_hyperparameter_optimization(
-            args.data_source, args.results_dir, args.n_trials, args.n
-        )
+        perform_hyperparameter_optimization(args.data_source, args.results_dir, args.n_trials, args.n)
     else:
-        evaluate_xgboost(
-            args.data_source, args.results_dir, args.n, args.zip_dir, args.config
-        )
+        evaluate_xgboost(args.data_source, args.results_dir, args.n, args.zip_dir, args.config)

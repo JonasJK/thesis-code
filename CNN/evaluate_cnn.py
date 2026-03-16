@@ -31,8 +31,8 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-class ModelPerformanceTracker:
 
+class ModelPerformanceTracker:
     def __init__(self, model_name="CNN_NIR"):
         self.model_name = model_name
         self.experiments = []
@@ -59,9 +59,8 @@ class ModelPerformanceTracker:
         with open(filepath, "w") as f:
             json.dump(self.experiments, f, indent=2)
 
-def evaluate_cnn(
-    data_source, results_dir, n_files=None, is_zip_dir=False, config_path="config.json"
-):
+
+def evaluate_cnn(data_source, results_dir, n_files=None, is_zip_dir=False, config_path="config.json"):
     """
     Evaluate a CNN NIR prediction model.
 
@@ -113,9 +112,7 @@ def evaluate_cnn(
             log.info(f"Model trained on {len(model.patches_rgb)} patches")
 
             log.info("Evaluating model...")
-            eval_files_limit = min(
-                n_files or 10, 10
-            )  # Limit evaluation to max 10 files
+            eval_files_limit = min(n_files or 10, 10)  # Limit evaluation to max 10 files
             eval_results = model.evaluate_files(data_loader, max_files=eval_files_limit)
 
             if eval_results:
@@ -134,17 +131,13 @@ def evaluate_cnn(
                     "data_source": str(data_source),
                     "n_files_available": len(data_loader),
                     "n_files_used_training": (
-                        len(model.training_files)
-                        if hasattr(model, "training_files")
-                        else n_files
+                        len(model.training_files) if hasattr(model, "training_files") else n_files
                     ),
                     "n_patches": len(model.patches_rgb),
                     "is_zip_dir": is_zip_dir,
                 }
 
-                experiment = tracker.track_experiment(
-                    model, eval_results, hyperparams, dataset_info
-                )
+                experiment = tracker.track_experiment(model, eval_results, hyperparams, dataset_info)
 
                 results_file = os.path.join(results_dir, "evaluation_results.json")
                 tracker.save_results(results_file)
@@ -180,6 +173,7 @@ def evaluate_cnn(
         gc.collect()
         log.info("Memory cleanup completed")
 
+
 def append_trial_to_csv(csv_path, rmse, hyperparams):
     fieldnames = ["rmse"] + list(hyperparams.keys())
     file_exists = os.path.isfile(csv_path)
@@ -191,9 +185,8 @@ def append_trial_to_csv(csv_path, rmse, hyperparams):
         row.update(hyperparams)
         writer.writerow(row)
 
-def perform_hyperparameter_optimization(
-    data_source, results_dir, n_trials=30, n_files=None
-):
+
+def perform_hyperparameter_optimization(data_source, results_dir, n_trials=30, n_files=None):
     """
     Perform hyperparameter optimization for CNN model.
 
@@ -204,9 +197,7 @@ def perform_hyperparameter_optimization(
     """
     os.makedirs(results_dir, exist_ok=True)
     # Write CSV in the same directory as this Python file
-    csv_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "optuna_trials.csv"
-    )
+    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "optuna_trials.csv")
 
     def objective(trial):
         batch_size = trial.suggest_categorical("batch_size", [16, 32, 64, 128])
@@ -216,9 +207,7 @@ def perform_hyperparameter_optimization(
         epochs = 15
         patch_size = 50
 
-        log.info(
-            f"Trial params: batch_size={batch_size}, lr={learning_rate:.6f}, val_split={validation_split:.2f}"
-        )
+        log.info(f"Trial params: batch_size={batch_size}, lr={learning_rate:.6f}, val_split={validation_split:.2f}")
 
         model = CNNNir(
             patch_size=patch_size,
@@ -247,9 +236,7 @@ def perform_hyperparameter_optimization(
                     # Evaluate on a limited set
                     eval_results = model.evaluate_files(
                         data_loader,
-                        max_files=min(
-                            trial_n_files, 3
-                        ),  # Even fewer files for evaluation
+                        max_files=min(trial_n_files, 3),  # Even fewer files for evaluation
                     )
 
                     if eval_results and "RMSE" in eval_results:
@@ -296,9 +283,7 @@ def perform_hyperparameter_optimization(
         "study_summary": {
             "trials_count": len(study.trials),
             "best_trial_number": study.best_trial.number if study.best_trial else None,
-            "pruned_trials": len(
-                [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
-            ),
+            "pruned_trials": len([t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]),
         },
     }
 
@@ -317,34 +302,25 @@ def perform_hyperparameter_optimization(
     with open(config_path, "w") as f:
         json.dump(best_config, f, indent=2)
 
-    log.info(
-        f"Hyperparameter optimization complete. Best parameters: {best_params}, Best RMSE: {best_value:.4f}"
-    )
+    log.info(f"Hyperparameter optimization complete. Best parameters: {best_params}, Best RMSE: {best_value:.4f}")
     log.info("Updated config.json with best parameters")
-    log.info(
-        f"Pruned {results['study_summary']['pruned_trials']} trials for efficiency"
-    )
+    log.info(f"Pruned {results['study_summary']['pruned_trials']} trials for efficiency")
 
     return results
+
 
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Evaluate CNN model or perform hyperparameter optimization"
-    )
+    parser = argparse.ArgumentParser(description="Evaluate CNN model or perform hyperparameter optimization")
     parser.add_argument(
         "--data-source",
         type=str,
         required=True,
         help="Path to file list (.txt) or directory containing ZIP files",
     )
-    parser.add_argument(
-        "--results-dir", type=str, required=True, help="Directory to save results"
-    )
-    parser.add_argument(
-        "-n", type=int, default=None, help="Number of files to use for training"
-    )
+    parser.add_argument("--results-dir", type=str, required=True, help="Directory to save results")
+    parser.add_argument("-n", type=int, default=None, help="Number of files to use for training")
     parser.add_argument(
         "--zip-dir",
         action="store_true",
@@ -371,10 +347,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.optimize:
-        perform_hyperparameter_optimization(
-            args.data_source, args.results_dir, args.n_trials, args.n
-        )
+        perform_hyperparameter_optimization(args.data_source, args.results_dir, args.n_trials, args.n)
     else:
-        evaluate_cnn(
-            args.data_source, args.results_dir, args.n, args.zip_dir, args.config
-        )
+        evaluate_cnn(args.data_source, args.results_dir, args.n, args.zip_dir, args.config)

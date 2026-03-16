@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.interpolate import interp1d
 
+
 def load_coefficients(file_path):
     """Load coefficients from CSV file."""
     df = pd.read_csv(
@@ -27,6 +28,7 @@ def load_coefficients(file_path):
     )
     return df
 
+
 def calculate_statistics(df):
     """Calculate mean, std, and confidence intervals for each coefficient."""
     stats = {}
@@ -42,12 +44,11 @@ def calculate_statistics(df):
         stats[col]["ci_95"] = 1.96 * sem
     return stats
 
+
 def create_coefficient_plots(df, stats):
     """Create box plots and time series plots for coefficient analysis."""
 
-    fig = make_subplots(
-        rows=1, cols=2, subplot_titles=("Box Plots", "Time Series (Sample Order)")
-    )
+    fig = make_subplots(rows=1, cols=2, subplot_titles=("Box Plots", "Time Series (Sample Order)"))
 
     coefficients = [
         "Red",
@@ -98,9 +99,7 @@ def create_coefficient_plots(df, stats):
         # Add smooth interpolated line using LOWESS-like smoothing
         if len(sample_indices) > 3:  # Need at least 4 points for cubic interpolation
             # Create more points for smooth curve
-            x_smooth = np.linspace(
-                min(sample_indices), max(sample_indices), len(sample_indices) * 3
-            )
+            x_smooth = np.linspace(min(sample_indices), max(sample_indices), len(sample_indices) * 3)
             f = interp1d(
                 sample_indices,
                 df[coef],
@@ -151,6 +150,7 @@ def create_coefficient_plots(df, stats):
 
     return fig
 
+
 def print_statistics_summary(stats):
     """Print a summary of the coefficient statistics."""
     print("\n" + "=" * 60)
@@ -165,6 +165,7 @@ def print_statistics_summary(stats):
         print(f"  Range:             [{stat['min']:7.3f}, {stat['max']:7.3f}]")
         print(f"  Sample Count:      {stat['count']:8d}")
 
+
 def main():
     """Main function to run the coefficient analysis."""
 
@@ -172,9 +173,7 @@ def main():
 
     if not os.path.exists(csv_file):
         print(f"Error: File '{csv_file}' not found in current directory.")
-        print(
-            "Please make sure the coefficients.csv file is in the same directory as this script."
-        )
+        print("Please make sure the coefficients.csv file is in the same directory as this script.")
         return
 
     try:
@@ -204,6 +203,7 @@ def main():
 
     except Exception as e:
         print(f"Error: {e}")
+
 
 if __name__ == "__main__":
     main()

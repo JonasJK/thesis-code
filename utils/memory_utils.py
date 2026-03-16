@@ -10,9 +10,11 @@ import torch
 
 log = logging.getLogger(__name__)
 
+
 def get_memory_usage_mb():
     """Get current memory usage in MB."""
     return psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+
 
 def print_memory_info(stage):
     """Log current memory usage with a stage label."""
@@ -24,6 +26,7 @@ def print_memory_info(stage):
         log.debug(f"Memory usage ({stage}): {mem_mb:.1f} MB")
     except Exception:
         log.debug(f"Memory usage ({stage}): unknown")
+
 
 def log_cuda_info():
     """Log information about CUDA devices being used."""

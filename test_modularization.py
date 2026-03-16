@@ -60,9 +60,7 @@ print(f"Memory monitoring works correctly: {mem_mb:.1f} MB")
 print("Testing model initialization...")
 try:
     rf_model = RandomForestNir(max_samples=1000, n_estimators=10)
-    assert hasattr(
-        rf_model, "_extract_features"
-    ), "RandomForest should have _extract_features method"
+    assert hasattr(rf_model, "_extract_features"), "RandomForest should have _extract_features method"
     assert hasattr(rf_model, "timing"), "RandomForest should have timing attribute"
     print("RandomForest model initialization successful")
 except Exception as e:
@@ -70,9 +68,7 @@ except Exception as e:
 
 try:
     xgb_model = XGBoostNir(max_samples=1000, n_estimators=10)
-    assert hasattr(
-        xgb_model, "_extract_features"
-    ), "XGBoost should have _extract_features method"
+    assert hasattr(xgb_model, "_extract_features"), "XGBoost should have _extract_features method"
     assert hasattr(xgb_model, "timing"), "XGBoost should have timing attribute"
     print("XGBoost model initialization successful")
 except Exception as e:
@@ -83,11 +79,7 @@ print("Testing feature extraction on models...")
 rf_features = rf_model._extract_features(rgb_data)
 xgb_features = xgb_model._extract_features(rgb_data)
 
-assert np.allclose(
-    rf_features, xgb_features
-), "Both models should produce identical features"
-assert np.allclose(
-    rf_features, features
-), "Model features should match utility function"
+assert np.allclose(rf_features, xgb_features), "Both models should produce identical features"
+assert np.allclose(rf_features, features), "Model features should match utility function"
 
 print("Tests passed.")

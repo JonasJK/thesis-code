@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+
 def load_trials(csv_path="optuna_trials.csv"):
     """Load trials from CSV file."""
     if not os.path.exists(csv_path):
@@ -19,6 +20,7 @@ def load_trials(csv_path="optuna_trials.csv"):
     df = pd.read_csv(csv_path)
     print(f"Loaded {len(df)} trials from {csv_path}")
     return df
+
 
 def analyze_trials(df):
     """Print summary statistics of trials."""
@@ -52,6 +54,7 @@ def analyze_trials(df):
             print(f"  {col}: {valid_df.loc[best_idx, col]}")
     print(f"  RMSE: {valid_df.loc[best_idx, 'rmse']:.4f}")
     print("=" * 50)
+
 
 def plot_trials(df, output_dir="eval"):
     """Create visualization plots for trials."""
@@ -127,9 +130,7 @@ def plot_trials(df, output_dir="eval"):
             if len(valid_df[param].unique()) > 2:
                 z = np.polyfit(valid_df[param], valid_df["rmse"], 1)
                 p = np.poly1d(z)
-                ax.plot(
-                    valid_df[param], p(valid_df[param]), "r--", alpha=0.8, linewidth=2
-                )
+                ax.plot(valid_df[param], p(valid_df[param]), "r--", alpha=0.8, linewidth=2)
         else:
             # Box plot for categorical
             valid_df.boxplot(column="rmse", by=param, ax=ax)
@@ -146,9 +147,7 @@ def plot_trials(df, output_dir="eval"):
     print(f"Saved: {output_dir}/parameter_vs_rmse.png")
 
     # Correlation heatmap (for numerical parameters only).
-    numerical_cols = [
-        col for col in valid_df.columns if valid_df[col].dtype in ["int64", "float64"]
-    ]
+    numerical_cols = [col for col in valid_df.columns if valid_df[col].dtype in ["int64", "float64"]]
     if len(numerical_cols) > 1:
         plt.figure(figsize=(10, 8))
         corr_matrix = valid_df[numerical_cols].corr()
@@ -167,6 +166,7 @@ def plot_trials(df, output_dir="eval"):
         plt.savefig(os.path.join(output_dir, "correlation_heatmap.png"), dpi=300)
         plt.close()
         print(f"Saved: {output_dir}/correlation_heatmap.png")
+
 
 def save_summary(df, output_dir="eval"):
     """Save summary statistics to JSON."""
@@ -189,11 +189,7 @@ def save_summary(df, output_dir="eval"):
         "mean_rmse": float(valid_df["rmse"].mean()),
         "median_rmse": float(valid_df["rmse"].median()),
         "std_rmse": float(valid_df["rmse"].std()),
-        "best_parameters": {
-            col: valid_df.loc[best_idx, col]
-            for col in valid_df.columns
-            if col != "rmse"
-        },
+        "best_parameters": {col: valid_df.loc[best_idx, col] for col in valid_df.columns if col != "rmse"},
     }
 
     # Convert NumPy scalars before writing JSON.
@@ -207,15 +203,14 @@ def save_summary(df, output_dir="eval"):
 
     print(f"Saved: {output_path}")
 
+
 if __name__ == "__main__":
     import argparse
 
     import numpy as np
 
     parser = argparse.ArgumentParser(description="Analyze CNN optimization trials")
-    parser.add_argument(
-        "--csv", type=str, default="optuna_trials.csv", help="Path to trials CSV file"
-    )
+    parser.add_argument("--csv", type=str, default="optuna_trials.csv", help="Path to trials CSV file")
     parser.add_argument(
         "--output-dir",
         type=str,

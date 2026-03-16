@@ -9,6 +9,7 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
+
 class DataLoader:
     """
     DataLoader class that can handle two types of data sources:
@@ -56,19 +57,13 @@ class DataLoader:
         if self.source.is_file() and self.source.suffix == ".txt":
             self.source_type = "filelist"
             self.file_paths = self._load_file_list()
-            log.info(
-                f"DataLoader initialized with file list: {len(self.file_paths)} files"
-            )
+            log.info(f"DataLoader initialized with file list: {len(self.file_paths)} files")
         elif self.source.is_dir():
             self.source_type = "zipdir"
             self.zip_files = self._find_zip_files()
-            log.info(
-                f"DataLoader initialized with ZIP directory: {len(self.zip_files)} ZIP files"
-            )
+            log.info(f"DataLoader initialized with ZIP directory: {len(self.zip_files)} ZIP files")
         else:
-            raise ValueError(
-                f"Source must be either a .txt file or a directory, got: {self.source}"
-            )
+            raise ValueError(f"Source must be either a .txt file or a directory, got: {self.source}")
 
     def _load_file_list(self) -> list[Path]:
         """Load file paths from text file."""
@@ -123,19 +118,13 @@ class DataLoader:
             temp_dir = tempfile.mkdtemp(prefix=f"dataloader_{zip_path.stem}_")
 
             with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                tif_files = [
-                    name
-                    for name in zip_ref.namelist()
-                    if name.lower().endswith((".tif", ".tiff"))
-                ]
+                tif_files = [name for name in zip_ref.namelist() if name.lower().endswith((".tif", ".tiff"))]
 
                 if not tif_files:
                     raise ValueError(f"No TIFF files found in {zip_path}")
 
                 if len(tif_files) > 1:
-                    log.warning(
-                        f"Multiple TIFF files found in {zip_path}, using first one: {tif_files[0]}"
-                    )
+                    log.warning(f"Multiple TIFF files found in {zip_path}, using first one: {tif_files[0]}")
 
                 tif_name = tif_files[0]
                 zip_ref.extract(tif_name, temp_dir)
@@ -163,9 +152,7 @@ class DataLoader:
                 shutil.rmtree(self._current_temp_dir)
                 log.debug(f"Cleaned up current extraction: {self._current_temp_dir}")
             except Exception as e:
-                log.warning(
-                    f"Failed to clean up current extraction {self._current_temp_dir}: {e}"
-                )
+                log.warning(f"Failed to clean up current extraction {self._current_temp_dir}: {e}")
 
         self._current_extracted_zip = None
         self._current_extracted_path = None
@@ -258,6 +245,7 @@ class DataLoader:
             return f"DataLoader(zipdir={self.source}, zips={len(self.zip_files)})"
         return f"DataLoader(source={self.source})"
 
+
 def example_usage():
     """Example of how to use the DataLoader class."""
 
@@ -284,6 +272,7 @@ def example_usage():
 
     except FileNotFoundError:
         print("ZIP directory not found (this is expected in example)")
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

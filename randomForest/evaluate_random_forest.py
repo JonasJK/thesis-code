@@ -31,8 +31,8 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-class ModelPerformanceTracker:
 
+class ModelPerformanceTracker:
     def __init__(self, model_name="RandomForestNIR"):
         self.model_name = model_name
         self.experiments = []
@@ -50,9 +50,7 @@ class ModelPerformanceTracker:
                 "total_time": sum(model.timing.values()),
             },
             "feature_importance": (
-                model.feature_importances_.tolist()
-                if model.feature_importances_ is not None
-                else None
+                model.feature_importances_.tolist() if model.feature_importances_ is not None else None
             ),
         }
         self.experiments.append(experiment)
@@ -61,6 +59,7 @@ class ModelPerformanceTracker:
     def save_results(self, filepath):
         with open(filepath, "w") as f:
             json.dump(self.experiments, f, indent=2)
+
 
 def evaluate_random_forest(data_source, results_dir, n_files=None, is_zip_dir=False):
     """
@@ -97,9 +96,7 @@ def evaluate_random_forest(data_source, results_dir, n_files=None, is_zip_dir=Fa
             log.info(f"Model trained on {model.sample_count} samples")
 
             log.info("Evaluating model...")
-            eval_files_limit = min(
-                n_files or 10, 10
-            )  # Limit evaluation to max 10 files
+            eval_files_limit = min(n_files or 10, 10)  # Limit evaluation to max 10 files
             eval_results = model.evaluate_files(
                 data_loader,
                 downscale_to=None,
@@ -121,17 +118,13 @@ def evaluate_random_forest(data_source, results_dir, n_files=None, is_zip_dir=Fa
                     "data_source": str(data_source),
                     "n_files_available": len(data_loader),
                     "n_files_used_training": (
-                        len(model.training_files)
-                        if hasattr(model, "training_files")
-                        else n_files
+                        len(model.training_files) if hasattr(model, "training_files") else n_files
                     ),
                     "n_samples": model.sample_count,
                     "is_zip_dir": is_zip_dir,
                 }
 
-                experiment = tracker.track_experiment(
-                    model, eval_results, hyperparams, dataset_info
-                )
+                experiment = tracker.track_experiment(model, eval_results, hyperparams, dataset_info)
 
                 results_file = os.path.join(results_dir, "evaluation_results.json")
                 tracker.save_results(results_file)
@@ -164,6 +157,7 @@ def evaluate_random_forest(data_source, results_dir, n_files=None, is_zip_dir=Fa
         gc.collect()
         log.info("Memory cleanup completed")
 
+
 def append_trial_to_csv(csv_path, rmse, hyperparams):
     fieldnames = ["rmse"] + list(hyperparams.keys())
     file_exists = os.path.isfile(csv_path)
@@ -175,14 +169,11 @@ def append_trial_to_csv(csv_path, rmse, hyperparams):
         row.update(hyperparams)
         writer.writerow(row)
 
-def perform_hyperparameter_optimization(
-    data_source, results_dir, n_trials=50, n_files=None
-):
+
+def perform_hyperparameter_optimization(data_source, results_dir, n_trials=50, n_files=None):
     os.makedirs(results_dir, exist_ok=True)
     # Write CSV in the same directory as this Python file
-    csv_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "optuna_trials.csv"
-    )
+    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "optuna_trials.csv")
 
     def objective(trial):
         # Define the hyperparameter search space
@@ -191,9 +182,7 @@ def perform_hyperparameter_optimization(
         max_features = trial.suggest_categorical("max_features", [4, 8, 16])
         max_samples = 10_000_000
 
-        model = RandomForestNir(
-            max_samples=max_samples, n_estimators=n_estimators, max_depth=max_depth
-        )
+        model = RandomForestNir(max_samples=max_samples, n_estimators=n_estimators, max_depth=max_depth)
         rmse = float("inf")
         try:
             with DataLoader(data_source) as data_loader:
@@ -255,10 +244,9 @@ def perform_hyperparameter_optimization(
     with open(os.path.join(results_dir, "optuna_results.json"), "w") as f:
         json.dump(results, f, indent=2)
 
-    log.info(
-        f"Hyperparameter optimization complete. Best parameters: {best_params}, Best value: {best_value}"
-    )
+    log.info(f"Hyperparameter optimization complete. Best parameters: {best_params}, Best value: {best_value}")
     return results
+
 
 if __name__ == "__main__":
     import argparse
@@ -272,12 +260,8 @@ if __name__ == "__main__":
         required=True,
         help="Path to file list (.txt) or directory containing ZIP files",
     )
-    parser.add_argument(
-        "--results-dir", type=str, required=True, help="Directory to save results"
-    )
-    parser.add_argument(
-        "-n", type=int, default=None, help="Number of files to use for training"
-    )
+    parser.add_argument("--results-dir", type=str, required=True, help="Directory to save results")
+    parser.add_argument("-n", type=int, default=None, help="Number of files to use for training")
     parser.add_argument(
         "--zip-dir",
         action="store_true",
@@ -298,8 +282,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.optimize:
-        perform_hyperparameter_optimization(
-            args.data_source, args.results_dir, args.n_trials, args.n
-        )
+        perform_hyperparameter_optimization(args.data_source, args.results_dir, args.n_trials, args.n)
     else:
         evaluate_random_forest(args.data_source, args.results_dir, args.n, args.zip_dir)

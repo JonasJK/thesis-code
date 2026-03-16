@@ -90,13 +90,9 @@ sns.heatmap(
     square=True,
     cbar_kws={"label": "Correlation"},
 )
-axes[2].set_title(
-    "Poor Trials (Bottom 25%) Correlation", fontweight="bold", fontsize=12
-)
+axes[2].set_title("Poor Trials (Bottom 25%) Correlation", fontweight="bold", fontsize=12)
 
-plt.suptitle(
-    "Correlation Comparison: Best vs Poor Trials", fontsize=14, fontweight="bold"
-)
+plt.suptitle("Correlation Comparison: Best vs Poor Trials", fontsize=14, fontweight="bold")
 plt.tight_layout()
 plt.savefig("eval/correlation_comparison.png", dpi=300, bbox_inches="tight")
 plt.show()
@@ -106,9 +102,7 @@ for param in param_cols:
     corr_best_val = corr_best.loc[param, "rmse"]
     corr_poor_val = corr_poor.loc[param, "rmse"]
     diff = abs(corr_best_val - corr_poor_val)
-    print(
-        f"{param:20s}: All={corr_all_val:+.3f}, Best={corr_best_val:+.3f}, Poor={corr_poor_val:+.3f}, |Δ|={diff:.3f}"
-    )
+    print(f"{param:20s}: All={corr_all_val:+.3f}, Best={corr_best_val:+.3f}, Poor={corr_poor_val:+.3f}, |Δ|={diff:.3f}")
 
 interactions = [
     ("n_estimators", "learning_rate"),

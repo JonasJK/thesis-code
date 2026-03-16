@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from sklearn.preprocessing import MinMaxScaler
 
+
 def load_data(coefficients_path, metrics_path):
     coef_df = pd.read_csv(
         coefficients_path,
@@ -28,12 +29,14 @@ def load_data(coefficients_path, metrics_path):
 
     return coef_df, metrics_df
 
+
 def prepare_data(coef_df, metrics_df):
     min_rows = min(len(coef_df), len(metrics_df))
     coef_df = coef_df.iloc[:min_rows]
     metrics_df = metrics_df.iloc[:min_rows]
     combined_df = pd.concat([coef_df, metrics_df], axis=1)
     return combined_df
+
 
 def create_unified_quality_metric(combined_df):
     scaler = MinMaxScaler()
@@ -58,6 +61,7 @@ def create_unified_quality_metric(combined_df):
     combined_df["OneMinusSSIM_norm"] = normalized_metrics["OneMinusSSIM_norm"]
 
     return combined_df
+
 
 def create_interactive_dashboard(combined_df):
     fig = make_subplots(
@@ -198,10 +202,9 @@ def create_interactive_dashboard(combined_df):
             )
     return fig
 
+
 def create_top_coefficients_summary(combined_df):
-    top_performers = combined_df[
-        combined_df["Quality_Score"] <= combined_df["Quality_Score"].quantile(0.25)
-    ]
+    top_performers = combined_df[combined_df["Quality_Score"] <= combined_df["Quality_Score"].quantile(0.25)]
 
     coef_cols = [
         "Red",
@@ -234,6 +237,7 @@ def create_top_coefficients_summary(combined_df):
 
     summary_df = pd.DataFrame(summary_data)
     return summary_df
+
 
 def main():
     coefficients_file = "coefficients.csv"
@@ -280,6 +284,7 @@ def main():
         import traceback
 
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

@@ -27,8 +27,8 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-class LinRegNir(BaseNirModel):
 
+class LinRegNir(BaseNirModel):
     def __init__(self):
         """
         Fast baseline linear regression: NIR = a*R + b*G + c*B + d + additional features
@@ -89,14 +89,10 @@ class LinRegNir(BaseNirModel):
             self.intercept_ = self.model.intercept_
 
             file_time = time.time() - start
-            log.info(
-                f"File processed in {file_time:.2f}s ({self.total_pixels_trained:,} total pixels trained)"
-            )
+            log.info(f"File processed in {file_time:.2f}s ({self.total_pixels_trained:,} total pixels trained)")
         else:
             file_time = time.time() - start
-            log.warning(
-                f"No data loaded from {file_path} (file may be corrupted or empty)"
-            )
+            log.warning(f"No data loaded from {file_path} (file may be corrupted or empty)")
 
         return file_time
 
@@ -109,9 +105,7 @@ class LinRegNir(BaseNirModel):
         feature_names = ["Red", "Green", "Blue", "VARI", "ExG", "ExGR", "CIVE", "VEG"]
 
         log.info("\nLearned coefficients (standardized features):")
-        for i, (name, coeff) in enumerate(
-            zip(feature_names, self.coefficients_, strict=False)
-        ):
+        for i, (name, coeff) in enumerate(zip(feature_names, self.coefficients_, strict=False)):
             log.info(f"  {name}: {coeff:.6f}")
         log.info(f"  Intercept: {self.intercept_[0]:.6f}")
 
@@ -119,15 +113,11 @@ class LinRegNir(BaseNirModel):
         if self.scaler_fitted:
             log.info("\nFeature scales (mean ± std):")
             for i, name in enumerate(feature_names):
-                log.info(
-                    f"  {name}: {self.scaler.mean_[i]:.2f} ± {np.sqrt(self.scaler.var_[i]):.2f}"
-                )
+                log.info(f"  {name}: {self.scaler.mean_[i]:.2f} ± {np.sqrt(self.scaler.var_[i]):.2f}")
 
         abs_coeffs = np.abs(self.coefficients_)
         max_idx = np.argmax(abs_coeffs)
-        log.info(
-            f"Strongest predictor: {feature_names[max_idx]} (coeff = {self.coefficients_[max_idx]:.6f})"
-        )
+        log.info(f"Strongest predictor: {feature_names[max_idx]} (coeff = {self.coefficients_[max_idx]:.6f})")
 
     def predict_image(self, rgb_image: np.ndarray) -> np.ndarray:
         """Predict NIR for an RGB image.
@@ -213,13 +203,9 @@ class LinRegNir(BaseNirModel):
 
         script_dir = Path(__file__).parent.resolve()
         if max_files:
-            model_filename = (
-                script_dir / f"linear_regression_model_{max_files}files.pkl"
-            )
+            model_filename = script_dir / f"linear_regression_model_{max_files}files.pkl"
         else:
-            model_filename = (
-                script_dir / f"linear_regression_model_{file_count}files.pkl"
-            )
+            model_filename = script_dir / f"linear_regression_model_{file_count}files.pkl"
         self.save_model(filepath=str(model_filename))
 
         log.info("\nPhase 2: Evaluation...")
@@ -238,9 +224,7 @@ class LinRegNir(BaseNirModel):
             "total_time": total_time,
             "train_time": train_time,
             "eval_time": eval_time,
-            "pixels_per_second": (
-                self.total_pixels_trained / total_time if total_time > 0 else 0
-            ),
+            "pixels_per_second": (self.total_pixels_trained / total_time if total_time > 0 else 0),
             **eval_results,  # Add RMSE, R², MAE, SSIM from evaluation
         }
 
@@ -283,9 +267,7 @@ class LinRegNir(BaseNirModel):
             csv_file: Path to the CSV file where coefficients will be saved.
         """
         if self.coefficients_ is None or self.intercept_ is None:
-            raise ValueError(
-                "Model coefficients and intercept are not available. Train the model first."
-            )
+            raise ValueError("Model coefficients and intercept are not available. Train the model first.")
 
         coeffs = list(self.coefficients_) + [self.intercept_[0]]
 
@@ -325,7 +307,7 @@ class LinRegNir(BaseNirModel):
         joblib.dump(model_data, str(abs_filepath), compress=3)
 
         log.info(f"Model saved to: {abs_filepath}")
-        log.info(f"File size: {abs_filepath.stat().st_size / (1024*1024):.2f} MB")
+        log.info(f"File size: {abs_filepath.stat().st_size / (1024 * 1024):.2f} MB")
 
     @classmethod
     def load_model(cls, filepath="linear_regression_model.pkl"):
@@ -343,9 +325,7 @@ class LinRegNir(BaseNirModel):
         instance = cls()
 
         instance.model = model_data["model"]
-        instance.scaler = model_data.get(
-            "scaler", StandardScaler()
-        )  # Backwards compatibility
+        instance.scaler = model_data.get("scaler", StandardScaler())  # Backwards compatibility
         instance.scaler_fitted = model_data.get("scaler_fitted", False)
         instance.coefficients_ = model_data["coefficients"]
         instance.intercept_ = model_data["intercept"]
@@ -354,13 +334,12 @@ class LinRegNir(BaseNirModel):
         instance.total_pixels_trained = model_data["total_pixels_trained"]
 
         log.info(f"Model loaded from {filepath}")
-        log.info(
-            f"  Trained on {instance.files_processed} files ({instance.total_pixels_trained:,} pixels)"
-        )
+        log.info(f"  Trained on {instance.files_processed} files ({instance.total_pixels_trained:,} pixels)")
         log.info(f"  Saved at: {model_data['timestamp']}")
         log.info(f"  Scaler fitted: {instance.scaler_fitted}")
 
         return instance
+
 
 if __name__ == "__main__":
     try:

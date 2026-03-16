@@ -27,6 +27,7 @@ log = logging.getLogger(__name__)
 
 # CNN Architecture.
 
+
 class NIRPredictionCNN(nn.Module):
     """
     Convolutional Neural Network for NIR prediction from RGB patches.
@@ -95,34 +96,30 @@ class NIRPredictionCNN(nn.Module):
         up3 = self.up_conv3(up3)  # Conv to reduce channels: 512 -> 256
         # Match tensor sizes before concatenation.
         if up3.shape[2:] != enc3.shape[2:]:
-            up3 = nn.functional.interpolate(
-                up3, size=enc3.shape[2:], mode="bilinear", align_corners=True
-            )
+            up3 = nn.functional.interpolate(up3, size=enc3.shape[2:], mode="bilinear", align_corners=True)
         dec3 = self.decoder3(torch.cat([up3, enc3], dim=1))  # 12x12x256
 
         up2 = self.up2(dec3)  # Upsample: 12x12 -> 24x24
         up2 = self.up_conv2(up2)  # Conv to reduce channels: 256 -> 128
         # Align spatial size with enc2 before concatenation.
         if up2.shape[2:] != enc2.shape[2:]:
-            up2 = nn.functional.interpolate(
-                up2, size=enc2.shape[2:], mode="bilinear", align_corners=True
-            )
+            up2 = nn.functional.interpolate(up2, size=enc2.shape[2:], mode="bilinear", align_corners=True)
         dec2 = self.decoder2(torch.cat([up2, enc2], dim=1))  # 25x25x128
 
         up1 = self.up1(dec2)  # Upsample: 25x25 -> 50x50
         up1 = self.up_conv1(up1)  # Conv to reduce channels: 128 -> 64
         # Align spatial size with enc1 before concatenation.
         if up1.shape[2:] != enc1.shape[2:]:
-            up1 = nn.functional.interpolate(
-                up1, size=enc1.shape[2:], mode="bilinear", align_corners=True
-            )
+            up1 = nn.functional.interpolate(up1, size=enc1.shape[2:], mode="bilinear", align_corners=True)
         dec1 = self.decoder1(torch.cat([up1, enc1], dim=1))  # 50x50x64
 
         out = self.out_conv(dec1)  # 50x50x1
 
         return out
 
+
 # Dataset for Patch-based Training.
+
 
 class PatchDataset(Dataset):
     """Dataset that generates patches from RGB images and corresponding NIR values."""
@@ -144,16 +141,14 @@ class PatchDataset(Dataset):
         nir = self.patches_nir[idx]  # (50, 50)
 
         # Convert to torch tensors and transpose RGB to (3, 50, 50)
-        rgb_tensor = (
-            torch.from_numpy(rgb.copy()).permute(2, 0, 1).float() / 255.0
-        )  # Normalize to [0, 1]
-        nir_tensor = (
-            torch.from_numpy(nir.copy()).unsqueeze(0).float() / 255.0
-        )  # Normalize to [0, 1]
+        rgb_tensor = torch.from_numpy(rgb.copy()).permute(2, 0, 1).float() / 255.0  # Normalize to [0, 1]
+        nir_tensor = torch.from_numpy(nir.copy()).unsqueeze(0).float() / 255.0  # Normalize to [0, 1]
 
         return rgb_tensor, nir_tensor
 
+
 # CNN Model Wrapper.
+
 
 class CNNNir:
     """CNN-based NIR prediction model that works with the existing infrastructure."""
@@ -174,15 +169,11 @@ class CNNNir:
         self.validation_split = validation_split
 
         if num_workers is None:
-            self.num_workers = (
-                int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count() or 4)) // 2
-            )
+            self.num_workers = int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count() or 4)) // 2
         else:
             self.num_workers = num_workers
 
-        torch.set_num_threads(
-            int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count() or 4))
-        )
+        torch.set_num_threads(int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count() or 4)))
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         log.info(f"Using device: {self.device}")
@@ -200,9 +191,7 @@ class CNNNir:
 
         self.timing = {"processing": 0.0, "fit": 0.0, "predict": 0.0, "evaluate": 0.0}
 
-        log.info(
-            f"Initialized CNN model with patch_size={patch_size}, batch_size={batch_size}, epochs={epochs}"
-        )
+        log.info(f"Initialized CNN model with patch_size={patch_size}, batch_size={batch_size}, epochs={epochs}")
 
     def _extract_patches(self, rgb_image, nir_image):
         """
@@ -225,10 +214,7 @@ class CNNNir:
                 patch_rgb = rgb_image[i : i + self.patch_size, j : j + self.patch_size]
                 patch_nir = nir_image[i : i + self.patch_size, j : j + self.patch_size]
 
-                if (
-                    patch_rgb.shape[0] == self.patch_size
-                    and patch_rgb.shape[1] == self.patch_size
-                ):
+                if patch_rgb.shape[0] == self.patch_size and patch_rgb.shape[1] == self.patch_size:
                     patches_rgb.append(patch_rgb)
                     patches_nir.append(patch_nir)
 
@@ -279,17 +265,11 @@ class CNNNir:
 
             try:
                 log.info(f"Processing file {files_processed + 1}: {file_path}")
-                log.debug(
-                    f"Current patches in memory: RGB={len(self.patches_rgb)}, NIR={len(self.patches_nir)}"
-                )
-                log.debug(
-                    f"Estimated memory usage: {len(self.patches_rgb) * 50 * 50 * 3 / 1024**2:.2f} MB"
-                )
+                log.debug(f"Current patches in memory: RGB={len(self.patches_rgb)}, NIR={len(self.patches_nir)}")
+                log.debug(f"Estimated memory usage: {len(self.patches_rgb) * 50 * 50 * 3 / 1024**2:.2f} MB")
 
                 rgb_image, nir_image = self.load_rgbi_image(file_path)
-                log.debug(
-                    f"Loaded image shapes - RGB: {rgb_image.shape}, NIR: {nir_image.shape}"
-                )
+                log.debug(f"Loaded image shapes - RGB: {rgb_image.shape}, NIR: {nir_image.shape}")
 
                 patches_rgb, patches_nir = self._extract_patches(rgb_image, nir_image)
                 log.debug(f"Extracted {len(patches_rgb)} patches from current image")
@@ -314,15 +294,9 @@ class CNNNir:
         duration = time.time() - start_time
         self.timing["processing"] = duration
 
-        log.info(
-            f"Loaded {total_patches} patches from {files_processed} files in {duration:.2f}s"
-        )
-        log.debug(
-            f"Final patches in memory: RGB={len(self.patches_rgb)}, NIR={len(self.patches_nir)}"
-        )
-        log.debug(
-            f"Final memory estimate: {len(self.patches_rgb) * 50 * 50 * 3 / 1024**2:.2f} MB"
-        )
+        log.info(f"Loaded {total_patches} patches from {files_processed} files in {duration:.2f}s")
+        log.debug(f"Final patches in memory: RGB={len(self.patches_rgb)}, NIR={len(self.patches_nir)}")
+        log.debug(f"Final memory estimate: {len(self.patches_rgb) * 50 * 50 * 3 / 1024**2:.2f} MB")
         log_cuda_info()
 
     def fit_model(self):
@@ -337,12 +311,8 @@ class CNNNir:
         start_time = time.time()
 
         log.debug(f"Converting {len(self.patches_rgb)} patches to numpy arrays...")
-        log.debug(
-            f"Estimated memory for RGB patches: {len(self.patches_rgb) * 50 * 50 * 3 / 1024**3:.2f} GB"
-        )
-        log.debug(
-            f"Estimated memory for NIR patches: {len(self.patches_nir) * 50 * 50 / 1024**3:.2f} GB"
-        )
+        log.debug(f"Estimated memory for RGB patches: {len(self.patches_rgb) * 50 * 50 * 3 / 1024**3:.2f} GB")
+        log.debug(f"Estimated memory for NIR patches: {len(self.patches_nir) * 50 * 50 / 1024**3:.2f} GB")
 
         patches_rgb = np.array(self.patches_rgb)
         log.debug(
@@ -368,14 +338,10 @@ class CNNNir:
 
         train_indices = indices[:n_train]
         val_indices = indices[n_train:]
-        log.debug(
-            f"Split indices into train ({len(train_indices)}) and val ({len(val_indices)})"
-        )
+        log.debug(f"Split indices into train ({len(train_indices)}) and val ({len(val_indices)})")
 
         log.debug("Creating training dataset...")
-        train_dataset = PatchDataset(
-            patches_rgb[train_indices], patches_nir[train_indices]
-        )
+        train_dataset = PatchDataset(patches_rgb[train_indices], patches_nir[train_indices])
         log.debug(f"Training dataset created with {len(train_dataset)} samples")
         log_cuda_info()
 
@@ -384,9 +350,7 @@ class CNNNir:
         log.debug(f"Validation dataset created with {len(val_dataset)} samples")
         log_cuda_info()
 
-        log.debug(
-            f"Creating training DataLoader (batch_size={self.batch_size}, workers={self.num_workers})..."
-        )
+        log.debug(f"Creating training DataLoader (batch_size={self.batch_size}, workers={self.num_workers})...")
         train_loader = TorchDataLoader(
             train_dataset,
             batch_size=self.batch_size,
@@ -397,9 +361,7 @@ class CNNNir:
         log.debug(f"Training DataLoader created with {len(train_loader)} batches")
         log_cuda_info()
 
-        log.debug(
-            f"Creating validation DataLoader (batch_size={self.batch_size}, workers={self.num_workers})..."
-        )
+        log.debug(f"Creating validation DataLoader (batch_size={self.batch_size}, workers={self.num_workers})...")
         val_loader = TorchDataLoader(
             val_dataset,
             batch_size=self.batch_size,
@@ -419,7 +381,7 @@ class CNNNir:
         patience_counter = 0
 
         for epoch in range(self.epochs):
-            log.debug(f"===== Epoch {epoch+1}/{self.epochs} =====")
+            log.debug(f"===== Epoch {epoch + 1}/{self.epochs} =====")
             log_cuda_info()
 
             log.debug("Starting training phase...")
@@ -428,12 +390,8 @@ class CNNNir:
 
             for batch_idx, (rgb, nir) in enumerate(train_loader):
                 if batch_idx == 0:
-                    log.debug(
-                        f"First batch - RGB shape: {rgb.shape}, NIR shape: {nir.shape}"
-                    )
-                    log.debug(
-                        f"First batch - RGB dtype: {rgb.dtype}, NIR dtype: {nir.dtype}"
-                    )
+                    log.debug(f"First batch - RGB shape: {rgb.shape}, NIR shape: {nir.shape}")
+                    log.debug(f"First batch - RGB dtype: {rgb.dtype}, NIR dtype: {nir.dtype}")
                     log.debug(f"Moving first batch to device: {self.device}")
 
                 rgb = rgb.to(self.device)
@@ -475,7 +433,7 @@ class CNNNir:
 
                 if batch_idx % 100 == 0:
                     log.info(
-                        f"Epoch [{epoch+1}/{self.epochs}], Batch [{batch_idx}/{len(train_loader)}], Loss: {loss.item():.6f}"
+                        f"Epoch [{epoch + 1}/{self.epochs}], Batch [{batch_idx}/{len(train_loader)}], Loss: {loss.item():.6f}"
                     )
                     if batch_idx % 500 == 0:
                         log_cuda_info()
@@ -493,9 +451,7 @@ class CNNNir:
             with torch.no_grad():
                 for val_batch_idx, (rgb, nir) in enumerate(val_loader):
                     if val_batch_idx == 0:
-                        log.debug(
-                            f"Validation - first batch shape: RGB {rgb.shape}, NIR {nir.shape}"
-                        )
+                        log.debug(f"Validation - first batch shape: RGB {rgb.shape}, NIR {nir.shape}")
 
                     rgb = rgb.to(self.device)
                     nir = nir.to(self.device)
@@ -513,15 +469,11 @@ class CNNNir:
             log_cuda_info()
             log_cuda_info()
 
-            log.info(
-                f"Epoch [{epoch+1}/{self.epochs}], Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}"
-            )
+            log.info(f"Epoch [{epoch + 1}/{self.epochs}], Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}")
 
             # Stop early if validation loss does not improve.
             if val_loss < best_val_loss - 0.0001:
-                log.debug(
-                    f"New best validation loss: {val_loss:.6f} (previous: {best_val_loss:.6f})"
-                )
+                log.debug(f"New best validation loss: {val_loss:.6f} (previous: {best_val_loss:.6f})")
                 best_val_loss = val_loss
                 patience_counter = 0
                 log.debug("Saving best model checkpoint...")
@@ -530,11 +482,9 @@ class CNNNir:
                 log_cuda_info()
             else:
                 patience_counter += 1
-                log.debug(
-                    f"No improvement. Patience counter: {patience_counter}/{patience}"
-                )
+                log.debug(f"No improvement. Patience counter: {patience_counter}/{patience}")
                 if patience_counter >= patience:
-                    log.info(f"Early stopping triggered at epoch {epoch+1}")
+                    log.info(f"Early stopping triggered at epoch {epoch + 1}")
                     break
 
         log.debug("Loading best model from checkpoint...")
@@ -568,29 +518,16 @@ class CNNNir:
         with torch.no_grad():
             for i in range(0, h - self.patch_size + 1, self.patch_size):
                 for j in range(0, w - self.patch_size + 1, self.patch_size):
-                    patch_rgb = rgb_image[
-                        i : i + self.patch_size, j : j + self.patch_size
-                    ]
+                    patch_rgb = rgb_image[i : i + self.patch_size, j : j + self.patch_size]
 
-                    if (
-                        patch_rgb.shape[0] == self.patch_size
-                        and patch_rgb.shape[1] == self.patch_size
-                    ):
-                        patch_tensor = (
-                            torch.from_numpy(patch_rgb).permute(2, 0, 1).float() / 255.0
-                        )
-                        patch_tensor = patch_tensor.unsqueeze(0).to(
-                            self.device
-                        )  # Add batch dimension
+                    if patch_rgb.shape[0] == self.patch_size and patch_rgb.shape[1] == self.patch_size:
+                        patch_tensor = torch.from_numpy(patch_rgb).permute(2, 0, 1).float() / 255.0
+                        patch_tensor = patch_tensor.unsqueeze(0).to(self.device)  # Add batch dimension
 
                         output = self.model(patch_tensor)
-                        output_np = (
-                            output.squeeze().cpu().numpy() * 255.0
-                        )  # Denormalize
+                        output_np = output.squeeze().cpu().numpy() * 255.0  # Denormalize
 
-                        nir_prediction[
-                            i : i + self.patch_size, j : j + self.patch_size
-                        ] += output_np
+                        nir_prediction[i : i + self.patch_size, j : j + self.patch_size] += output_np
                         count_map[i : i + self.patch_size, j : j + self.patch_size] += 1
 
                         del patch_tensor, output
@@ -606,24 +543,14 @@ class CNNNir:
                         if i_start >= 0 and j_start >= 0:
                             patch_rgb = rgb_image[i_start:i_end, j_start:j_end]
 
-                            if (
-                                patch_rgb.shape[0] == self.patch_size
-                                and patch_rgb.shape[1] == self.patch_size
-                            ):
-                                patch_tensor = (
-                                    torch.from_numpy(patch_rgb).permute(2, 0, 1).float()
-                                    / 255.0
-                                )
+                            if patch_rgb.shape[0] == self.patch_size and patch_rgb.shape[1] == self.patch_size:
+                                patch_tensor = torch.from_numpy(patch_rgb).permute(2, 0, 1).float() / 255.0
                                 patch_tensor = patch_tensor.unsqueeze(0).to(self.device)
 
                                 output = self.model(patch_tensor)
-                                output_np = (
-                                    output.squeeze().cpu().numpy() * 255.0
-                                )  # Denormalize
+                                output_np = output.squeeze().cpu().numpy() * 255.0  # Denormalize
 
-                                nir_prediction[
-                                    i_start:i_end, j_start:j_end
-                                ] += output_np
+                                nir_prediction[i_start:i_end, j_start:j_end] += output_np
                                 count_map[i_start:i_end, j_start:j_end] += 1
 
                                 # Clean up tensors
@@ -742,9 +669,7 @@ class CNNNir:
         mae = sum_abs_error / total_pixels
 
         mean_true = sum_true / total_pixels
-        ss_tot = (
-            sum_true_squared - 2 * mean_true * sum_true + total_pixels * mean_true**2
-        )
+        ss_tot = sum_true_squared - 2 * mean_true * sum_true + total_pixels * mean_true**2
 
         r2 = 1 - sum_squared_error / ss_tot if ss_tot > 0 else 0.0
 
@@ -765,15 +690,15 @@ class CNNNir:
 
         return results
 
+
 # Main Function.
+
 
 @profile_execution
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Train and evaluate CNN NIR prediction model"
-    )
+    parser = argparse.ArgumentParser(description="Train and evaluate CNN NIR prediction model")
     parser.add_argument(
         "-n",
         type=int,
@@ -786,9 +711,7 @@ def main():
         help="Path to RGB image file for prediction",
         default=None,
     )
-    parser.add_argument(
-        "--output", type=str, help="Path to save predicted NIR image", default=None
-    )
+    parser.add_argument("--output", type=str, help="Path to save predicted NIR image", default=None)
     parser.add_argument(
         "--data-source",
         type=str,
@@ -807,15 +730,9 @@ def main():
         help="Fraction of files to use for training (rest for evaluation)",
         default=0.8,
     )
-    parser.add_argument(
-        "--batch-size", type=int, help="Batch size for training", default=32
-    )
-    parser.add_argument(
-        "--epochs", type=int, help="Number of training epochs", default=20
-    )
-    parser.add_argument(
-        "--learning-rate", type=float, help="Learning rate", default=0.001
-    )
+    parser.add_argument("--batch-size", type=int, help="Batch size for training", default=32)
+    parser.add_argument("--epochs", type=int, help="Number of training epochs", default=20)
+    parser.add_argument("--learning-rate", type=float, help="Learning rate", default=0.001)
     parser.add_argument(
         "--num-workers",
         type=int,
@@ -880,9 +797,7 @@ def main():
 
     try:
         if args.eval_data_source:
-            log.info(
-                f"Using separate data sources - Training: {args.data_source}, Evaluation: {args.eval_data_source}"
-            )
+            log.info(f"Using separate data sources - Training: {args.data_source}, Evaluation: {args.eval_data_source}")
 
             with DataLoader(args.data_source) as data_loader:
                 log.info(f"Training DataLoader initialized: {data_loader}")
@@ -894,9 +809,7 @@ def main():
             try:
                 with DataLoader(args.eval_data_source) as eval_data_loader:
                     log.info(f"Evaluation DataLoader initialized: {eval_data_loader}")
-                    eval_results = model.evaluate_files(
-                        eval_data_loader, max_files=min(args.n or 20, 20)
-                    )
+                    eval_results = model.evaluate_files(eval_data_loader, max_files=min(args.n or 20, 20))
                     if eval_results is not None:
                         print("Evaluation results:")
                         print(f"  RMSE: {eval_results['RMSE']:.4f}")
@@ -907,19 +820,13 @@ def main():
                 log.error(f"Evaluation failed: {e}")
 
         else:
-            log.info(
-                f"Using single data source with automatic train/test split: {args.data_source}"
-            )
+            log.info(f"Using single data source with automatic train/test split: {args.data_source}")
 
             with DataLoader(args.data_source) as data_loader:
                 log.info(f"DataLoader initialized: {data_loader}")
 
                 total_files = len(data_loader)
-                max_train_files = (
-                    int(total_files * args.train_test_split)
-                    if args.n is None
-                    else args.n
-                )
+                max_train_files = int(total_files * args.train_test_split) if args.n is None else args.n
 
                 log.info(
                     f"Total files: {total_files}, Using {max_train_files} for training ({args.train_test_split:.1%} split)"
@@ -932,15 +839,9 @@ def main():
             # Evaluate on remaining files
             try:
                 with DataLoader(args.data_source) as eval_data_loader:
-                    log.info(
-                        f"Created separate DataLoader for evaluation: {eval_data_loader}"
-                    )
-                    log.info(
-                        f"Evaluation will automatically skip {len(model.training_files)} files used in training"
-                    )
-                    eval_results = model.evaluate_files(
-                        eval_data_loader, max_files=min(args.n or 20, 20)
-                    )
+                    log.info(f"Created separate DataLoader for evaluation: {eval_data_loader}")
+                    log.info(f"Evaluation will automatically skip {len(model.training_files)} files used in training")
+                    eval_results = model.evaluate_files(eval_data_loader, max_files=min(args.n or 20, 20))
                     if eval_results is not None:
                         print("Evaluation results:")
                         print(f"  RMSE: {eval_results['RMSE']:.4f}")
@@ -975,9 +876,8 @@ def main():
         except Exception as e:
             log.error(f"NIR prediction or saving failed: {e}")
     elif args.predict or args.output:
-        log.error(
-            "Both --predict and --output arguments must be provided to generate NIR prediction"
-        )
+        log.error("Both --predict and --output arguments must be provided to generate NIR prediction")
+
 
 if __name__ == "__main__":
     main()

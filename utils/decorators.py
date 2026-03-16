@@ -10,6 +10,7 @@ import pstats
 
 log = logging.getLogger(__name__)
 
+
 def profile_execution(func):
     """
     Decorator that profiles the execution of a function using cProfile.
@@ -46,6 +47,7 @@ def profile_execution(func):
         return result
 
     return wrapper
+
 
 def profile_execution_detailed(num_stats=20, sort_by="tottime"):
     """
@@ -94,6 +96,7 @@ def profile_execution_detailed(num_stats=20, sort_by="tottime"):
 
     return decorator
 
+
 def timing_decorator(func):
     """
     Simple decorator that just times function execution.
@@ -114,9 +117,7 @@ def timing_decorator(func):
             result = func(*args, **kwargs)
         finally:
             duration = time.time() - start_time
-            print(
-                f"\n⏱️  Function '{func.__name__}' completed in {duration:.2f} seconds"
-            )
+            print(f"\n⏱️  Function '{func.__name__}' completed in {duration:.2f} seconds")
 
         return result
 

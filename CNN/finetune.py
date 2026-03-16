@@ -24,6 +24,7 @@ EPOCHS = 10
 LEARNING_RATE = 0.0001
 BATCH_SIZE = 32
 
+
 def main():
     log.info("Starting finetuning process")
     log.info(f"  Model: {MODEL_PATH}")
@@ -44,7 +45,7 @@ def main():
             batch_size=BATCH_SIZE,
             epochs=EPOCHS,
             learning_rate=LEARNING_RATE,
-            validation_split=0.15,  
+            validation_split=0.15,
         )
 
         log.info(f"Loading pre-trained model from {MODEL_PATH}...")
@@ -53,9 +54,7 @@ def main():
 
         log.info(f"Loading RGBI file: {RGBI_FILE}")
         rgb_image, nir_image = model.load_rgbi_image(RGBI_FILE)
-        log.info(
-            f"Image loaded - RGB shape: {rgb_image.shape}, NIR shape: {nir_image.shape}"
-        )
+        log.info(f"Image loaded - RGB shape: {rgb_image.shape}, NIR shape: {nir_image.shape}")
 
         log.info("Extracting patches...")
         patches_rgb, patches_nir = model._extract_patches(rgb_image, nir_image)
@@ -76,13 +75,13 @@ def main():
         log.info(f"Finetuned model saved to: {output_path}")
         log.info("=" * 60)
 
-
     except Exception as e:
         log.error(f"Finetuning failed: {e}")
         import traceback
 
         traceback.print_exc()
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

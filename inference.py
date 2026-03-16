@@ -14,6 +14,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
+
 def detect_model_type(model_path):
     """Detect model type from file extension and path."""
     model_path = Path(model_path)
@@ -35,6 +36,7 @@ def detect_model_type(model_path):
             return "linear_regression"
     else:
         raise ValueError(f"Unsupported model file extension: {model_path.suffix}")
+
 
 def load_rgbi_image(file_path):
     """
@@ -71,6 +73,7 @@ def load_rgbi_image(file_path):
         profile,
     )
 
+
 def save_nir_image(nir_array, output_path, profile):
     """
     Save NIR prediction as a GeoTIFF.
@@ -86,6 +89,7 @@ def save_nir_image(nir_array, output_path, profile):
         dst.write(nir_array.astype(np.float32), 1)
 
     log.info(f"NIR prediction saved to: {output_path}")
+
 
 def load_model(model_path, model_type):
     """
@@ -139,6 +143,7 @@ def load_model(model_path, model_type):
 
     return model
 
+
 def predict_nir(model, rgb_image, model_type):
     """
     Predict NIR from RGB image using the loaded model.
@@ -160,6 +165,7 @@ def predict_nir(model, rgb_image, model_type):
     log.info(f"Prediction completed in {duration:.2f}s")
 
     return nir_prediction
+
 
 def calculate_metrics(nir_true, nir_pred):
     """
@@ -183,13 +189,12 @@ def calculate_metrics(nir_true, nir_pred):
     mae = mean_absolute_error(nir_true_flat, nir_pred_flat)
 
     data_range = nir_true.max() - nir_true.min()
-    ssim_score = (
-        ssim(nir_true, nir_pred, data_range=data_range) if data_range > 0 else 0.0
-    )
+    ssim_score = ssim(nir_true, nir_pred, data_range=data_range) if data_range > 0 else 0.0
 
     metrics = {"RMSE": rmse, "R²": r2, "MAE": mae, "SSIM": ssim_score}
 
     return metrics
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -203,9 +208,7 @@ def main():
         required=True,
         help="Path to trained model file (.pkl for sklearn models, .pth for CNN)",
     )
-    parser.add_argument(
-        "--input", type=str, required=True, help="Path to input RGBI image file"
-    )
+    parser.add_argument("--input", type=str, required=True, help="Path to input RGBI image file")
     parser.add_argument(
         "--model-type",
         type=str,
@@ -243,17 +246,13 @@ def main():
         "random_forest": "rf",
     }
     suffix = model_suffix_map.get(model_type, model_type)
-    output_path = Path(
-        input_path.parent, f"{input_path.stem}_{suffix}{input_path.suffix}"
-    )
+    output_path = Path(input_path.parent, f"{input_path.stem}_{suffix}{input_path.suffix}")
     log.info(f"Output will be saved to: {output_path}")
 
     try:
         log.info(f"Loading image: {input_path}")
         rgb_image, nir_true, profile = load_rgbi_image(input_path)
-        log.info(
-            f"Image shape: RGB={rgb_image.shape}, NIR={'None' if nir_true is None else nir_true.shape}"
-        )
+        log.info(f"Image shape: RGB={rgb_image.shape}, NIR={'None' if nir_true is None else nir_true.shape}")
 
         model = load_model(model_path, model_type)
 
@@ -275,9 +274,7 @@ def main():
             log.info(f"SSIM: {metrics['SSIM']:.4f}")
 
         elif args.compare and nir_true is None:
-            log.warning(
-                "Comparison requested but no ground truth NIR band found in input image"
-            )
+            log.warning("Comparison requested but no ground truth NIR band found in input image")
 
         log.info("\n" + "=" * 60)
         log.info("INFERENCE COMPLETE")
@@ -292,6 +289,7 @@ def main():
 
         traceback.print_exc()
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
