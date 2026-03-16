@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "blosc>=1.11.3",
-    # "cuml-cu12==25.8.0 ", 
+    "cuml-cu12==25.8.0 ", 
     "cupy-cuda12x>=13.6.0",
     "dask>=0.17.5",
     "fiona>=1.10.1",
