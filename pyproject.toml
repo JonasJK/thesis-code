@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "blosc>=1.11.3",
-    # cuml-cu12==25.8.0  
+    "cuml-cu12==25.8.0 ", 
     "cupy-cuda12x>=13.6.0",
     "dask>=0.17.5",
     "fiona>=1.10.1",
@@ -34,7 +34,7 @@ url = "https://pypi.org/simple"
 url = "https://pypi.nvidia.com/"
 
 [tool.uv]
-# environments = ["sys_platform == 'linux'"]
+environments = ["sys_platform == 'linux'"]
 index-strategy = "unsafe-best-match"
 
 
