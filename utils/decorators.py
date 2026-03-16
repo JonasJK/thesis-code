@@ -117,7 +117,7 @@ def timing_decorator(func):
             result = func(*args, **kwargs)
         finally:
             duration = time.time() - start_time
-            print(f"\n⏱️  Function '{func.__name__}' completed in {duration:.2f} seconds")
+            print(f"\nFunction '{func.__name__}' completed in {duration:.2f} seconds")
 
         return result
 

@@ -28,8 +28,8 @@ def evaluate_files(model, file_paths_or_loader, downscale_to=None, sample_limit=
     """Evaluate model predictions against ground truth.
 
     Can accept either:
-    1. A list of file paths (traditional approach)
-    2. A DataLoader instance (for 1-by-1 processing of ZIP files)
+    1. A list of file paths 
+    2. A DataLoader instance 
 
     Parameters:
     -----------
