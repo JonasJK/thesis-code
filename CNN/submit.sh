@@ -14,5 +14,5 @@ module load CUDA/12.4.0
 cd /home/klugej/thesis/code/CNN || exit 1
 uv sync
 #uv run finetune.py
-uv run cnn_nir.py -n "$1" --data-source /data/lacy-vme/khant/dop/sn-2023/ --load-model best_cnn_model.pth
+uv run cnn_nir.py -n "$1" --data-source /data/lacy-vme/khant/dop/sn-2023/
 
