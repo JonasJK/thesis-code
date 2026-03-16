@@ -8,12 +8,10 @@ import sys
 
 import numpy as np
 
-# Add the code directory to path
 code_dir = os.path.dirname(os.path.abspath(__file__))
 if code_dir not in sys.path:
     sys.path.insert(0, code_dir)
 
-# Test imports
 print("Testing imports...")
 try:
     from utils import BaseNirModel, extract_features, get_memory_usage_mb
@@ -39,24 +37,20 @@ except ImportError as e:
     print(f"XGBoost import failed: {e}")
     sys.exit(1)
 
-# Test basic functionality
 print("\nTesting basic functionality...")
 
-# Test feature extraction
 print("Testing feature extraction...")
-rgb_data = np.random.rand(100, 3) * 1000  # Simulate RGB data
+rgb_data = np.random.rand(100, 3) * 1000  
 features = extract_features(rgb_data)
 assert features.shape == (100, 8), f"Expected shape (100, 8), got {features.shape}"
 print("Feature extraction works correctly")
 
-# Test memory monitoring
 print("Testing memory monitoring...")
 mem_mb = get_memory_usage_mb()
 assert isinstance(mem_mb, float), "Memory usage should return a float"
 assert mem_mb > 0, "Memory usage should be positive"
 print(f"Memory monitoring works correctly: {mem_mb:.1f} MB")
 
-# Test model initialization
 print("Testing model initialization...")
 try:
     rf_model = RandomForestNir(max_samples=1000, n_estimators=10)
@@ -74,7 +68,6 @@ try:
 except Exception as e:
     print(f"XGBoost model initialization failed: {e}")
 
-# Test feature extraction on models
 print("Testing feature extraction on models...")
 rf_features = rf_model._extract_features(rgb_data)
 xgb_features = xgb_model._extract_features(rgb_data)
